@@ -6,13 +6,13 @@ from bot.bot_config import run_webhooks, run_polling
 from core.config import settings
 
 
-async def start() -> None:
+def start() -> None:
     if settings.webhook_mode:
-        await run_webhooks()
+        run_webhooks()
     else:
-        await run_polling()
+        asyncio.run(run_polling())
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(start())
+    start()
