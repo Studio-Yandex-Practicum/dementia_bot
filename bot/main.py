@@ -2,27 +2,17 @@ import asyncio
 import logging
 import sys
 
-from aiogram import Bot
-from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
-from aiogram.types import Message
-from aiogram.utils.markdown import hbold
-
-from core.config import dp, TOKEN
+from bot.bot_config import run_webhooks, run_polling
+from core.config import settings
 
 
-@dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
-    """
-    This handler receives messages with `/start` command
-    """
-    await message.answer(f"Hello, {hbold(message.from_user.full_name)}!")
+async def start() -> None:
+    if settings.webhook_mode:
+        await run_webhooks()
+    else:
+        await run_polling()
 
-
-async def main() -> None:
-    bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
-    await dp.start_polling(bot)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main())
+    asyncio.run(start())

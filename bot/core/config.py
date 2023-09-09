@@ -1,10 +1,13 @@
-import os
+from pydantic_settings import BaseSettings
 
-from aiogram import Dispatcher
-from dotenv import load_dotenv
 
-load_dotenv()
+class Settings(BaseSettings):
+    """Main settings."""
+    telegram_api_token: str
+    webhook_mode: bool
 
-TOKEN = os.getenv('TG_TOKEN')
+    class Config:
+        env_file = '.env'
 
-dp = Dispatcher()
+
+settings = Settings()
