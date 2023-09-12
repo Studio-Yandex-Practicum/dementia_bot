@@ -18,11 +18,11 @@ class Question(models.Model):
     """
     Вопросы для тестов. Есть возможность выбрать тип вопроса.
     Подразумевается, что баллы за ответы на вопросы да/нет фиксированные. 
-    Если нет, то надо менять модель
+    Если нет, то надо менять модель. 
     """
 
     text = models.TextField(verbose_name="Текст вопроса")
-    question_type = models.CharField(max_length=50, choices=QUESTION_TYPES,
+    question_type = models.CharField(max_length=45, choices=QUESTION_TYPES,
                                      default=TEXT, verbose_name="Тип вопроса")
 
     def __str__(self):
@@ -38,7 +38,7 @@ class Test(models.Model):
 
     title = models.CharField(max_length=255, verbose_name="Название теста")
     description = models.TextField(blank=True, verbose_name="Описание теста")
-    questions = models.ManyToManyField(Question, related_name='tests',
+    question = models.ManyToManyField(Question, related_name='tests',
                                        verbose_name="Вопросы в тесте")
 
     def calculate_test_score(self, user):
@@ -72,7 +72,7 @@ class UserAnswer(models.Model):
                                    verbose_name="Текстовый ответ")
     image_answer = models.ImageField(upload_to='user_answers/',
                                      blank=True, null=True,
-                                     verbose_name="Ответ рисунок")
+                                     verbose_name="Ответ рисунком")
     test = models.ForeignKey(Test, on_delete=models.CASCADE,
                              verbose_name="Тест")
     timestamp = models.DateTimeField(auto_now_add=True,
