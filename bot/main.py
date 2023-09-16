@@ -2,8 +2,9 @@ import asyncio
 import logging
 import sys
 
-from bot.bot_config import run_webhooks, run_polling
 from core.config import settings
+
+from bot.bot_config import run_polling, run_webhooks
 
 
 def start() -> None:
