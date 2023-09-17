@@ -40,3 +40,11 @@ poetry --version
 ```bash
 poetry completions bash >> ~/.bash_completion
 ```
+### 1. Установка poetry
+1. Заполнить файлы .env согласно образцу
+
+2. ВЫполнить команду:
+
+```
+docker-compose -f ./infra/docker-compose.yaml up -d
+```

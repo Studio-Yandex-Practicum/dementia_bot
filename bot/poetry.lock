@@ -729,6 +729,16 @@ files = [
 ]
 
 [[package]]
+name = "validate-email"
+version = "1.3"
+description = "Validate_email verify if an email address is valid and really exists."
+optional = false
+python-versions = "*"
+files = [
+    {file = "validate_email-1.3.tar.gz", hash = "sha256:784719dc5f780be319cdd185dc85dd93afebdb6ebb943811bc4c7c5f9c72aeaf"},
+]
+
+[[package]]
 name = "yarl"
 version = "1.9.2"
 description = "Yet another URL library"
@@ -818,4 +828,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "1b141bffca1377bd5cfd76720fac2b3cce2823bb46d8e152437083d6222be5dd"
+content-hash = "b3f3a5ed207b915117da2a19138370e22e9b3ced16fdf7b0f4de7feb93bda4f0"
