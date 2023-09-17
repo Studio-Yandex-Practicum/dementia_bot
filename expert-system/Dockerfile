@@ -1,14 +1,41 @@
-FROM python:3.10-slim
+FROM python:3.10-slim as builder
+
+RUN apt-get update && apt-get install -y \
+    python3-dev \
+    gcc \
+    libc-dev \
+    libffi-dev \
+    libpq-dev \
+    curl
+
+RUN pip install poetry==1.5.1
 
 WORKDIR /app
 
-COPY poetry.lock pyproject.toml ./
+COPY ./pyproject.toml ./poetry.lock ./
 
-RUN apt update -y && apt install curl -y
-RUN curl -sSL https://install.python-poetry.org | python3 -
-RUN $HOME/.local/bin/poetry config virtualenvs.create false
-RUN $HOME/.local/bin/poetry install
+COPY ./README.md .
 
-COPY ./ ./
+RUN mkdir "expert_system" && echo "import this" > expert_system/main.py
 
-CMD ["gunicorn", "expert_system.wsgi:application", "--bind", "0:8000" ] 
+RUN poetry install 
+
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    curl
+
+COPY --from=builder /root/.cache/pypoetry/virtualenvs/ /root/.cache/pypoetry/virtualenvs/
+
+RUN pip install poetry==1.5.1
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+COPY . .
+
+RUN chmod +x docker-entrypoint.sh
+ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
