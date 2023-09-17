@@ -1,13 +1,13 @@
-from aiogram import Router
-from aiogram.types import Message
-from aiogram.fsm.context import FSMContext
-from aiogram.filters import Command
-from validate_email import validate_email
 from datetime import datetime
 
-from .test.states import Register
-from .test.keyboard import kb_gender
+from aiogram import Router
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message
+from validate_email import validate_email
 
+from .test.keyboard import kb_gender
+from .test.states import Register
 
 form_router = Router()
 
