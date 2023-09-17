@@ -1,5 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 kb_gender = ReplyKeyboardMarkup(
     keyboard=[
