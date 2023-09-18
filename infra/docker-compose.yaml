@@ -17,7 +17,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     env_file:
-      - ../bot/.env
+      - ./.env
 
   web:
     build:
@@ -28,7 +28,7 @@ services:
     environment:
       - DB_HOST=db
     env_file:
-      - ../expert-system/.env
+      - ./.env
     restart: always
     volumes:
       - static_value:/app/static/

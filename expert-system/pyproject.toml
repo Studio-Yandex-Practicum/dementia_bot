@@ -18,7 +18,8 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
-start = "python manage.py runserver"
+start = "gunicorn expert_system.wsgi:application --bind"
 makemigrations = "python manage.py makemigrations"
 migrate = "python manage.py migrate"
 createsuperuser = "python manage.py createsuperuser"
+collectstatic = "python manage.py collectstatic --no-input"
