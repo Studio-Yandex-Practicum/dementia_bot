@@ -12,6 +12,7 @@ gunicorn = "^21.2.0"
 psycopg2-binary = "^2.9.7"
 python-dotenv = "^1.0.0"
 taskipy = "^1.12.0"
+djangorestframework = "^3.14.0"
 
 [build-system]
 requires = ["poetry-core"]
