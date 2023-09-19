@@ -16,10 +16,9 @@ class Command(BaseCommand):
             ) as jsonfile:
                 reader = json.load(jsonfile)
                 for row in reader:
-                    text, question_type = row
                     Question.objects.get_or_create(
-                        text=text,
-                        question_type=question_type
+                        text=row.get('text'),
+                        question_type=row.get('question_type')
                     )
         except FileNotFoundError:
             raise CommandError('Добавьте файл questions.json в директорию data')
