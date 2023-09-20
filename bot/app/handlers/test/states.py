@@ -6,3 +6,8 @@ class Register(StatesGroup):
     age = State()
     gender = State()
     email = State()
+
+
+class Question(StatesGroup):
+    test = State()
+    answer = State()
