@@ -1,0 +1,160 @@
+{
+  "testId": 1,
+  "questions": [
+    {
+      "questionId": 1,
+      "type": "PERSONAL",
+      "answer": "vlad"
+    },
+    {
+      "questionId": 2,
+      "type": "PERSONAL",
+      "answer": "1989-01-30"
+    },
+    {
+      "questionId": 3,
+      "type": "PERSONAL",
+      "answer": "M"
+    },
+    {
+      "questionId": 4,
+      "type": "PERSONAL",
+      "answer": "высшее"
+    },
+    {
+      "questionId": 5,
+      "type": "TEXT",
+      "answer": "vlad@vlad.ru"
+    },
+    {
+      "questionId": 6,
+      "type": "TEXT",
+      "answer": 12334543
+    },
+    {
+      "questionId": 7,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 8,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 9,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 10,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 11,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 12,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },{
+      "questionId": 13,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 14,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 15,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 16,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 17,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 18,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 19,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 20,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 21,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 22,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 23,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 24,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 25,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 26,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "да"
+    },
+    {
+      "questionId": 27,
+      "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
+      "type": "MULTIPLE_CHOICE",
+      "answer": "ytn"
+    }
+  ]
+}
