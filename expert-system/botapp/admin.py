@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Question, Test, UserAnswer
+from .models import Question, Test, TestParticipant, UserAnswer
 
 
 @admin.register(Test)
@@ -18,4 +18,14 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(UserAnswer)
 class TestResultAdmin(admin.ModelAdmin):
-    list_display = ('user', 'test', 'question', 'answer', 'timestamp', 'score')
+    list_display = ('participant', 'test',
+                    'question', 'answer',
+                    'timestamp', 'score')
+
+
+@admin.register(TestParticipant)
+class UserTestProfileAdmin(admin.ModelAdmin):
+    list_display = ('name', 'telegram_id',
+                    'email', 'age', 'test',
+                    'gender', 'profession',
+                    'total_score')
