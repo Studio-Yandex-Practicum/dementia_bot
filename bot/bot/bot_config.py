@@ -3,6 +3,8 @@ from aiogram.enums import ParseMode
 from aiogram.webhook.aiohttp_server import (SimpleRequestHandler,
                                             setup_application)
 from aiohttp import web
+
+from app.handlers.question_handler import question_router
 from app.handlers.start_handler import start_router
 from app.handlers.test_handler import form_router
 from core.config import settings
@@ -10,6 +12,7 @@ from core.config import settings
 dp = Dispatcher()
 dp.include_router(start_router)
 dp.include_router(form_router)
+dp.include_router(question_router)
 
 bot = Bot(settings.telegram_api_token, parse_mode=ParseMode.HTML)
 
