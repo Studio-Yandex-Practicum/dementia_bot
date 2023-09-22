@@ -1,6 +1,5 @@
+import botapp.constants as const
 from django.db import models
-
-from . import constants as const
 
 
 class Test(models.Model):
@@ -29,7 +28,7 @@ class Question(models.Model):
     text = models.TextField(verbose_name="Текст вопроса")
     question_type = models.CharField(max_length=50,
                                      choices=const.QUESTION_TYPES,
-                                     default=const.TEXT,
+                                     default='text',
                                      verbose_name="Тип вопроса")
 
     def __str__(self):
@@ -60,7 +59,7 @@ class UserAnswer(models.Model):
     score = models.IntegerField(default=0, verbose_name="Балл")
 
     def __str__(self):
-        return f"{self.user.name} - {self.score}"
+        return f"{self.participant.name} - {self.score}"
 
     class Meta:
         verbose_name = "Ответ пользователя"
@@ -82,6 +81,8 @@ class TestParticipant(models.Model):
                               choices=const.GENDER_CHOICES,
                               verbose_name="Пол")
     profession = models.CharField(max_length=255, verbose_name="Профессия")
+    timestamp = models.DateTimeField(auto_now_add=True,
+                                     verbose_name="Время прохождения")
     total_score = models.IntegerField(default=0, verbose_name="Общий балл")
 
     class Meta:
@@ -90,3 +91,20 @@ class TestParticipant(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.total_score}"
+
+    @classmethod
+    def create_from_data(cls, test_id, age, data_dict):
+        """Создание участника теста."""
+
+        participant = cls(
+            test_id=test_id,
+            email=data_dict['email'],
+            name=data_dict['name'],
+            age=age,
+            telegram_id=data_dict['telegram_id'],
+            profession=data_dict['occupation'],
+            gender=data_dict['gender'],
+        )
+        participant.save()
+
+        return participant

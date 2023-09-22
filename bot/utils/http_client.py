@@ -1,6 +1,7 @@
-import aiohttp
 import urllib.parse
 from asyncio import get_event_loop
+
+import aiohttp
 
 
 class HttpClient:

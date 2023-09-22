@@ -1,10 +1,9 @@
+from botapp.models import Test
+from botapp.serializers import TestDataSerializer, TestSerializer
+from botapp.utils import create_participant, create_user_answers
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
-from .models import Test
-from .serializers import TestDataSerializer, TestSerializer
-from .utils import create_participant, create_user_answers
 
 
 @api_view(['GET'])
@@ -31,8 +30,10 @@ def submit_test(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     validated_data = serializer.validated_data
-    participant = create_participant(validated_data)
-    create_user_answers(participant, validated_data)
+    test_id = validated_data['testId']
+    questions = validated_data['questions']
+    participant = create_participant(questions, test_id)
+    create_user_answers(participant, questions, test_id)
 
     return Response({"message": "Тест завершен успешно!"},
                     status=status.HTTP_201_CREATED)
