@@ -1,18 +1,22 @@
-TEXT = 'Text Input'
-
-MULTIPLE_CHOICE = 'Yes or no'
-
-PERSONAL = 'Personal question'
-
 QUESTION_TYPES = [
-        (TEXT, 'Текст. Ввод информации'),
-        (MULTIPLE_CHOICE, 'Выбор да/нет'),
-        (PERSONAL, 'Персональные данные'),
-    ]
+    ('name', 'Имя'),
+    ('gender', 'Пол'),
+    ('birthdate', 'Дата рождения'),
+    ('email', 'Электронная почта'),
+    ('occupation', 'Профессия/образование'),
+    ('telegram_id', 'ID Telegram'),
+    ('text', 'Текст'),
+    ('multiple_choice', 'Выбор да/нет'),
+]
 
-GENDER_CHOICES = (
-        ('M', 'Мужчина'),
-        ('F', 'Женщина'),
-        )
+
+GENDER_CHOICES = [
+    ('М', 'Мужской'),
+    ('Ж', 'Женский'),
+]
 
 EMAIL_REGEX = '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]+(?<=.)\S{1,}$'
+
+
+PERSONAL_DETAILS = ['name', 'birthdate', 'gender',
+                    'occupation', 'email', 'telegram_id']

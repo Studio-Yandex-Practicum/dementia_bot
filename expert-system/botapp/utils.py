@@ -1,67 +1,64 @@
 from datetime import datetime
 
-from .models import Question, Test, TestParticipant, UserAnswer
+from botapp.constants import PERSONAL_DETAILS
+from botapp.models import TestParticipant, UserAnswer
 
 
-def create_participant(validated_data):
+def create_participant(questions, test_id):
     """Создание участника теста."""
 
-    questions_data = validated_data['questions']
-    questions_dict = {q['questionId']: q['answer'] for q in questions_data}
+    data_dict = {}
 
-    name = questions_dict[1]
-    dob_str = questions_dict[2]
-    gender = questions_dict[3]
-    profession = questions_dict[4]
-    email = questions_dict[5]
-    telegram_id = questions_dict[6]
-    dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
-    current_year = datetime.today().year
-    age = current_year - dob.year - ((
-                                     datetime.now().month,
-                                     datetime.now().day) < (dob.month, dob.day
-                                                            ))
+    for question in questions:
+        question_type = question['type']
 
-    participant = TestParticipant(
-        test=Test.objects.get(pk=validated_data['testId']),
-        email=email,
-        name=name,
-        age=age,
-        telegram_id=telegram_id,
-        profession=profession,
-        gender=gender,
-    )
-    participant.save()
+        if question_type in PERSONAL_DETAILS:
+            data_dict[question_type] = question['answer']
+
+        else:
+            data_dict[question_type] = None
+
+    dob_str = data_dict['birthdate']
+
+    if dob_str:
+        age = datetime.now().year - datetime.strptime(dob_str, '%Y-%m-%d').year
+
+    else:
+        age = None
+
+    participant = TestParticipant.create_from_data(test_id, age, data_dict)
 
     return participant
 
 
-def create_user_answers(participant, validated_data):
+def create_user_answers(participant, questions, test_id):
     """Создание ответов пользователя."""
 
     total_test_score = 0
-    questions_data = validated_data['questions']
-    questions_dict = {q['questionId']: q['answer'] for q in questions_data}
+
+    questions_dict = {
+                      q['questionId']: q['answer'] 
+                      for q in questions 
+                      if q['type'] not in PERSONAL_DETAILS
+                    }
+
     user_answers = []
 
-    questions_in_range = Question.objects.filter(pk__in=range(7, 28))
-    questions_map = {q.pk: q for q in questions_in_range}
-
-    user_answers = []
-
-    for question_id in range(7, 28):
-        answer_text = questions_dict.get(question_id)
+    for question_id, answer_text in questions_dict.items():
         score = 1 if answer_text.lower() == 'да' else 0
         total_test_score += score
 
         user_answer = UserAnswer(
             participant=participant,
-            question=questions_map[question_id],
+            question_id=question_id,
             answer=answer_text,
-            test=participant.test,
+            test_id=test_id,
             score=score
         )
         user_answers.append(user_answer)
+
     UserAnswer.objects.bulk_create(user_answers)
+
     participant.total_score = total_test_score
+
     participant.save()

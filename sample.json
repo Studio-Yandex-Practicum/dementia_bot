@@ -3,45 +3,45 @@
   "questions": [
     {
       "questionId": 1,
-      "type": "PERSONAL",
+      "type": "name",
       "answer": "vlad"
     },
     {
       "questionId": 2,
-      "type": "PERSONAL",
-      "answer": "1989-01-30"
+      "type": "birthdate",
+      "answer": "2009-01-30"
     },
     {
       "questionId": 3,
-      "type": "PERSONAL",
-      "answer": "M"
+      "type": "gender",
+      "answer": "М"
     },
     {
       "questionId": 4,
-      "type": "PERSONAL",
+      "type": "occupation",
       "answer": "высшее"
     },
     {
       "questionId": 5,
-      "type": "TEXT",
-      "answer": "vlad@vlad.ru"
+      "type": "email",
+      "answer": "vlad@vlad.com"
     },
     {
       "questionId": 6,
-      "type": "TEXT",
+      "type": "telegram_id",
       "answer": 12334543
     },
     {
       "questionId": 7,
       "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
       "type": "MULTIPLE_CHOICE",
-      "answer": "да"
+      "answer": "Нет"
     },
     {
       "questionId": 8,
       "questionText": "Есть ли у близкого Вам человека проблемы с памятью?",
       "type": "MULTIPLE_CHOICE",
-      "answer": "да"
+      "answer": "дwer"
     },
     {
       "questionId": 9,
