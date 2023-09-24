@@ -1,16 +1,20 @@
+from datetime import datetime
+
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, \
     ReplyKeyboardRemove, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from validate_email import validate_email
 
+from app.handlers.handler_constants import PERSONAL_TYPES, GENDER_CHOICES
 from app.handlers.test.states import Question
-
-bool_answers = {
-    "Да": "true",
-    "Нет": "false"
-}
+from app.handlers.validators.validator import (validate_birthday,
+                                               validate_gender,
+                                               validate_bool_answer)
+from core.config import settings
+from utils.http_client import HttpClient
 
 tests = [
     {
@@ -28,22 +32,9 @@ tests = [
 
 ]
 
-test_1 = {
-    'questions': [
-        {
-            'questionId': 1,
-            'type': 'string',
-            'question': "How are you?"
-        },
-        {
-            'questionId': 2,
-            'type': 'bool',
-            'question': "Are you woman?"
-        },
-    ]
-}
 
 question_router = Router()
+
 
 @question_router.message(Command("cancel"))
 @question_router.message(F.text.casefold() == "отмена")
@@ -74,13 +65,15 @@ async def start_test(message: Message, state: FSMContext):
 
 @question_router.callback_query(Question.test)
 async def choose_test(query: CallbackQuery, state: FSMContext):
-    test_id = query.data
+    test_id = 1  # пока примем 1, далее будет браться из списка тестов
+    async with HttpClient() as session:
+        response = await session.get(f'{settings.HOST}api/test/{test_id}/')
     await state.update_data(testId=test_id)
-    # Тут получаем список вопросов
     position = 0
-    questions = test_1['questions']  # Пока берем со словаря
+    questions = response['questions']   # Тут получаем список вопросов
     await state.set_state(Question.answer)
-    await state.update_data(questions=questions)
+    await state.update_data(questions=questions,
+                            telegram_id=query.from_user.id)
     await query.message.delete()
     await query.message.answer(
         questions[0]['question'],
@@ -94,32 +87,58 @@ async def questions(message: Message, state: FSMContext):
     data = await state.get_data()
     position = data.get('position')
     questions = data.get('questions')
-
+    question_type = questions[position]['type']
     answer = message.text
-    if questions[position]['type'] == "bool":
-        if validate_bool_answer(answer):
-            answer = bool_answers[answer]
-        else:
+    if question_type == "multiple_choice":
+        if not validate_bool_answer(answer):
             await message.answer(
-                "Пожалуйста воспользуйтесь кнопкой."
+                "Введите Да или Нет или воспользуйтесь клавиатурой."
             )
             return
+    elif question_type in PERSONAL_TYPES:
+        if question_type == 'birthdate':
+            if not validate_birthday(answer):
+                await message.answer(
+                    "Пожалуйста введите дату рождения в формате ДД.ММ.ГГГГ."
+                )
+                return
+            answer = str(datetime.strptime(answer, '%d.%m.%Y').date())
+        elif question_type == 'gender':
+            if not validate_gender(answer):
+                await message.answer(
+                    "Ваш ответ не соответствует вариантам Мужской/Женский."
+                )
+                return
+            answer = GENDER_CHOICES[answer]
+        elif question_type == 'email':
+            if not validate_email(answer):
+                await message.answer('Почта неверно написана. Попробуй снова.')
+                return
     await state.update_data({f"answer_{position}": answer})
-    await state.update_data(position=position+1)
-    if position+1 > len(questions)-1:
-        updated_data = await state.get_data()
-        message_text = prepare_json_data(updated_data)
-        await state.clear()
-        await message.answer(
-            message_text,
-            reply_markup=ReplyKeyboardRemove(),
-            parse_mode="HTML"
+    new_position = position + 1
+    if questions[new_position]['type'] == "telegram_id":
+        await state.update_data(
+            {f"answer_{new_position}": data.get('telegram_id')}
         )
+        new_position += 1
+    await state.update_data(position=new_position)
+    if new_position > len(questions)-1:
+        updated_data = await state.get_data()
+        json_data = prepare_answers(updated_data)
+        async with HttpClient() as session:
+            response = await session.post(f'{settings.HOST}api/submit/',
+                                          json_data)
+        await message.answer(
+            "Спасибо за то, что прошли наш тест.",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        await state.clear()
+
     else:
         await message.answer(
-            questions[position+1]['question'],
+            questions[new_position]['question'],
             reply_markup=markup_keyboard(
-                questions[position+1]['type']
+                questions[new_position]['type']
             )
         )
 
@@ -133,7 +152,7 @@ def inline_builder(tests: list):
 
 
 def markup_keyboard(question_type):
-    if question_type == "bool":
+    if question_type == "multiple_choice":
         markup = ReplyKeyboardMarkup(
             keyboard=[
                 [
@@ -158,22 +177,17 @@ def markup_keyboard(question_type):
     return markup
 
 
-def validate_bool_answer(answer: str):
-    available_answers = ['Да', 'Нет']
-    if answer in available_answers:
-        return True
-    return False
-
-
-def prepare_json_data(data: dict):
+def prepare_answers(data: dict):
     questions = data.get('questions')
     test_id = data.get('testId')
-    message = f"'testId': '{test_id}',\n" \
-              f"'answers': [\n"
+    json_data = {"testId": test_id,
+                 "questions": []}
     for n in range(0, len(questions)):
-        message += f"'questionId': {questions[n]['questionId']},\n" \
-                   f"'type': {questions[n]['type']},\n" \
-                   f"'answer': {data.get(f'answer_{n}')}\n"
-    message += "]"
-    return message
+        answer = {
+            "questionId": questions[n]['questionId'],
+            "type": questions[n]['type'],
+            "answer": data.get(f'answer_{n}')
+        }
+        json_data['questions'].append(answer)
 
+    return json_data

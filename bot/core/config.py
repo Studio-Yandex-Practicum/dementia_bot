@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     # Base URL for webhook will be used to generate webhook URL for Telegram,
     # in this example it is used public DNS with HTTPS support
     BASE_WEBHOOK_URL: str = "https://aiogram.dev/"
+    HOST: str = "http://web:8000/"
 
     class Config:
         env_file = '.env'
