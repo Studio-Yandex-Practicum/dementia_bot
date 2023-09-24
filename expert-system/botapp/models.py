@@ -39,6 +39,22 @@ class Question(models.Model):
         verbose_name_plural = "Вопросы"
 
 
+class TestQuestion(models.Model):
+    """Вопросы в тестах. Для админки."""
+
+    test = models.ForeignKey(Test, on_delete=models.CASCADE,
+                             verbose_name="Тест")
+    question = models.ForeignKey(Question, on_delete=models.CASCADE,
+                                 verbose_name="Вопрос")
+
+    class Meta:
+        verbose_name = "Вопрос в составе теста"
+        verbose_name_plural = "Вопросы в составе тестов"
+        
+    def __str__(self):
+        return f"{self.test.title}"
+
+
 class UserAnswer(models.Model):
     """
     Ответы пользователей на вопросы.

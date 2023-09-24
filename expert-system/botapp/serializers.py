@@ -1,7 +1,6 @@
-from rest_framework import serializers
-
 from botapp.models import Question, Test
 from botapp.validators import validate_dob, validate_email
+from rest_framework import serializers
 
 
 class QuestionSerializer(serializers.ModelSerializer):
