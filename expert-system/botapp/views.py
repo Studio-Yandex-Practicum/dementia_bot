@@ -1,5 +1,6 @@
 from botapp.models import Test
-from botapp.serializers import TestDataSerializer, TestSerializer
+from botapp.serializers import (TestDataSerializer, TestReadSerializer,
+                                TestSerializer)
 from botapp.utils import create_participant, create_user_answers
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -37,3 +38,11 @@ def submit_test(request):
 
     return Response({"message": "Тест завершен успешно!"},
                     status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def get_all_tests(request):
+    """Получаем все доступные тесты."""
+    tests = Test.objects.all()
+    serializer = TestReadSerializer(tests, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

@@ -80,3 +80,11 @@ class TestDataSerializer(serializers.Serializer):
 
             if question_type == target_type:
                 validation_function(answer)
+
+
+class TestReadSerializer(serializers.ModelSerializer):
+    """Сериализатор для отдачи тестов."""
+
+    class Meta:
+        model = Test
+        fields = ('id', 'title',)
