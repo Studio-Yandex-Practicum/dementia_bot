@@ -16,22 +16,6 @@ from app.handlers.validators.validator import (validate_birthday,
 from core.config import settings
 from utils.http_client import HttpClient
 
-tests = [
-    {
-        'name': "test1",
-        'id': 1
-    },
-    {
-        'name': "test2",
-        'id': 2
-    },
-    {
-        'name': "test3",
-        'id': 3
-    },
-
-]
-
 
 question_router = Router()
 
@@ -56,6 +40,8 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
 @question_router.message(Command('starttest'))
 async def start_test(message: Message, state: FSMContext):
     # Tут получаем список Тестов
+    async with HttpClient() as session:
+        tests = await session.get(f'{settings.HOST}api/tests/')
     await state.set_state(Question.test)
     await message.answer(
         "Выберите тест:",
@@ -146,7 +132,7 @@ async def questions(message: Message, state: FSMContext):
 def inline_builder(tests: list):
     builder = InlineKeyboardBuilder()
     for test in tests:
-        builder.button(text=test['name'], callback_data=str(test['id']))
+        builder.button(text=test['title'], callback_data=str(test['id']))
     builder.adjust(1, 1)
     return builder
 
