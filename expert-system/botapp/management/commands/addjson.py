@@ -1,7 +1,7 @@
 import json
 
-from django.core.management.base import BaseCommand, CommandError
 from botapp.models import Question
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
