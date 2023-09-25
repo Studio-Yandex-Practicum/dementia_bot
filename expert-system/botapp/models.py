@@ -8,7 +8,7 @@ class Test(models.Model):
     title = models.CharField(max_length=255, verbose_name="Название теста")
     description = models.TextField(blank=True, verbose_name="Описание теста")
     questions = models.ManyToManyField('Question', related_name='tests',
-                                       verbose_name="Вопросы в тесте")
+                                       verbose_name="Вопросы в тесте", blank=True)
 
     class Meta:
         verbose_name = "Тест"

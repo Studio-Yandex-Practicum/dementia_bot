@@ -1,10 +1,9 @@
-from botapp.models import Question, Test, TestParticipant, UserAnswer
+from botapp.models import (Question,
+                           Test,
+                           TestParticipant,
+                           UserAnswer,
+                           )
 from django.contrib import admin
-
-
-@admin.register(Question)
-class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'text', 'question_type')
 
 
 @admin.register(UserAnswer)
@@ -22,20 +21,30 @@ class UserTestProfileAdmin(admin.ModelAdmin):
                     'total_score')
 
 
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'text', 'question_type', 'test_included')
+
+    def test_included(self, obj):
+        """Возвращает список тестов, в которые включен вопрос."""
+
+        return ", ".join([str(test.title) for test in obj.tests.all()])
+    test_included.short_description = 'Тесты, в которые включен вопрос'
+
+
+class TestQuestionInline(admin.TabularInline):
+    model = Test.questions.through
+    extra = 1
+
+
 @admin.register(Test)
 class TestAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'description', 'qtty_in_test')
+    inlines = [TestQuestionInline]
+    exclude = ('questions',)
 
-    def questions_list(self, obj):
+    def qtty_in_test(self, obj):
+        """Возвращает количество вопросов в тесте."""
+        return obj.questions.count()
 
-        questions = obj.questions.all()
-
-        joined_questions = [
-            f"{index}. {q.text}"
-            for index, q in enumerate(questions, start=1)
-        ]
-
-        return "\n".join(joined_questions)
-
-    questions_list.short_description = 'Вопросы теста'
-
-    list_display = ('title', 'description', 'questions_list')
+    qtty_in_test.short_description = 'Количество вопросов в тесте'

@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from aiogram import Router, F
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, \
-    ReplyKeyboardRemove, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import (CallbackQuery, KeyboardButton, Message,
+                           ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from validate_email import validate_email
 
