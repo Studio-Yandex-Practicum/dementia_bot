@@ -44,6 +44,7 @@ class TestDataSerializer(serializers.Serializer):
 
     def validate(self, data):
         self.validate_data_integrity(data)
+        self.validate_question_count(data)
         self.validate_birthdate(data)
         self.validate_email(data)
         return data
@@ -59,6 +60,25 @@ class TestDataSerializer(serializers.Serializer):
                 for key in ('questionId', 'type', 'answer')
             ):
                 raise serializers.ValidationError('Неверный формат данных')
+
+    def validate_question_count(self, data):
+        """
+        Проверяем, что количество ответов соответствует
+        количеству вопросов в тесте.
+        """
+
+        test_id = data.get('testId')
+        questions_count_in_request = len(data.get('questions', []))
+
+        test = Test.objects.get(id=test_id)
+        questions_count_in_test = test.questions.count()
+
+        if questions_count_in_request != questions_count_in_test:
+            error_msg = (
+                        f'Ожидалось {questions_count_in_test} ответов, '
+                        f'но получено {questions_count_in_request}'
+                        )
+            raise serializers.ValidationError(error_msg)
 
     def validate_birthdate(self, data):
         """Проверяем, что дата рождения валидна."""

@@ -8,7 +8,7 @@ class Test(models.Model):
     title = models.CharField(max_length=255, verbose_name="Название теста")
     description = models.TextField(blank=True, verbose_name="Описание теста")
     questions = models.ManyToManyField('Question', related_name='tests',
-                                       verbose_name="Вопросы в тесте")
+                                       verbose_name="Вопросы в тесте", blank=True)
 
     class Meta:
         verbose_name = "Тест"
@@ -37,22 +37,6 @@ class Question(models.Model):
     class Meta:
         verbose_name = "Вопрос"
         verbose_name_plural = "Вопросы"
-
-
-class TestQuestion(models.Model):
-    """Вопросы в тестах. Для админки."""
-
-    test = models.ForeignKey(Test, on_delete=models.CASCADE,
-                             verbose_name="Тест")
-    question = models.ForeignKey(Question, on_delete=models.CASCADE,
-                                 verbose_name="Вопрос")
-
-    class Meta:
-        verbose_name = "Вопрос в составе теста"
-        verbose_name_plural = "Вопросы в составе тестов"
-        
-    def __str__(self):
-        return f"{self.test.title}"
 
 
 class UserAnswer(models.Model):

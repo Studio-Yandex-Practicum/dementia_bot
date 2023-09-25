@@ -2,7 +2,6 @@ from botapp.models import (Question,
                            Test,
                            TestParticipant,
                            UserAnswer,
-                           TestQuestion
                            )
 from django.contrib import admin
 
@@ -34,7 +33,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 class TestQuestionInline(admin.TabularInline):
-    model = TestQuestion
+    model = Test.questions.through
     extra = 1
 
 
@@ -42,16 +41,10 @@ class TestQuestionInline(admin.TabularInline):
 class TestAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'description', 'qtty_in_test')
     inlines = [TestQuestionInline]
+    exclude = ('questions',)
 
     def qtty_in_test(self, obj):
         """Возвращает количество вопросов в тесте."""
-
         return obj.questions.count()
 
     qtty_in_test.short_description = 'Количество вопросов в тесте'
-
-
-@admin.register(TestQuestion)
-class TestQuestionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'test', 'question')
-    list_filter = ('test__title', 'question__question_type')
