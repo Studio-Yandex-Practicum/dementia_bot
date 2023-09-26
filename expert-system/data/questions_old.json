@@ -1,4 +1,9 @@
 [
+    {"text":"Введите Имя респондента", "question_type":"name"},
+    {"text":"Введите Дату рождения респондента", "question_type":"birthdate"},
+    {"text":"Укажите Пол респондента", "question_type": "gender"},
+    {"text": "Укажите образование/профессию респондента", "question_type":"occupation"},
+    {"text": "Укажите свою электронную почту", "question_type":"email"},
     {"text": "Есть ли у близкого Вам человека проблемы с памятью?", "question_type": "multiple_choice"},
     {"text": "Если это так, стала ли память хуже, чем несколько лет назад?", "question_type": "multiple_choice"},
     {"text": "Повторяет ли Ваш близкий один и тот же вопрос или одну и ту же мысль несколько раз в течение дня?", "question_type": "multiple_choice"},

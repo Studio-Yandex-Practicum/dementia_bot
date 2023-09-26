@@ -4,21 +4,21 @@ from botapp.constants import PERSONAL_DETAILS
 from botapp.models import TestParticipant, UserAnswer
 
 
-def create_participant(questions, test_id):
+def create_participant(participant_data, test_id):
     """Создание участника теста."""
 
-    data_dict = {}
+    # data_dict = {}
 
-    for question in questions:
-        question_type = question['type']
-
-        if question_type in PERSONAL_DETAILS:
-            data_dict[question_type] = question['answer']
-
-        else:
-            data_dict[question_type] = None
-
-    dob_str = data_dict['birthdate']
+    #for question in questions:
+    #    question_type = question['type']
+#
+    #    if question_type in PERSONAL_DETAILS:
+    #        data_dict[question_type] = question['answer']
+#
+    #    else:
+    #        data_dict[question_type] = None
+#
+    dob_str = participant_data.get('birthdate')
 
     if dob_str:
         age = datetime.now().year - datetime.strptime(dob_str, '%Y-%m-%d').year
@@ -26,7 +26,8 @@ def create_participant(questions, test_id):
     else:
         age = None
 
-    participant = TestParticipant.create_from_data(test_id, age, data_dict)
+    participant = TestParticipant.create_from_data(test_id, age,
+                                                   participant_data)
 
     return participant
 

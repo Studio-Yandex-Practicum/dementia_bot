@@ -36,17 +36,34 @@ class QuestionWithAnswerSerializer(serializers.Serializer):
         fields = ('questionId', 'type', 'answer')
 
 
+class ParticipantSerializer(serializers.Serializer):
+    """Сериализатор для обработки вопросов с ответами."""
+
+    name = serializers.CharField()
+    gender = serializers.CharField(max_length=1)
+    birthdate = serializers.CharField(max_length=10, min_length=10)
+    email = serializers.EmailField()
+    occupation = serializers.CharField()
+    telegram_id = serializers.IntegerField()
+
+
+    class Meta:
+        fields = ('name', 'gender', 'birthdate', 'email', 'occupation',
+                  'telegram_id')
+
+
 class TestDataSerializer(serializers.Serializer):
     """Сериализатор для обработки данных от пользователя."""
 
     testId = serializers.IntegerField()
+    participant = ParticipantSerializer()
     questions = QuestionWithAnswerSerializer(many=True)
 
     def validate(self, data):
         self.validate_data_integrity(data)
         self.validate_question_count(data)
-        self.validate_birthdate(data)
-        self.validate_email(data)
+        # self.validate_birthdate(data)
+        # self.validate_email(data)
         return data
 
     def validate_data_integrity(self, data):
@@ -80,10 +97,10 @@ class TestDataSerializer(serializers.Serializer):
                         )
             raise serializers.ValidationError(error_msg)
 
-    def validate_birthdate(self, data):
-        """Проверяем, что дата рождения валидна."""
-
-        self.validate_question_type(data, 'birthdate', validate_dob)
+    # def validate_birthdate(self, data):
+    #     """Проверяем, что дата рождения валидна."""
+#
+    #     self.validate_question_type(data, 'birthdate', validate_dob)
 
     def validate_email(self, data):
         """Проверяем, что email валиден."""

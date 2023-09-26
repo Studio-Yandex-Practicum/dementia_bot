@@ -1,67 +1,111 @@
-from datetime import datetime
-
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
-from validate_email import validate_email
+from aiogram.types import (CallbackQuery, Message,
+                           ReplyKeyboardRemove)
 
-from .test.keyboard import kb_gender
-from .test.states import Register
-
-form_router = Router()
-
-
-@form_router.message(Command('test'))
-async def register_(message: Message, state: FSMContext) -> None:
-    await state.set_state(Register.name)
-    await message.answer('Введите Ваше Имя:')
+from app.handlers.handler_constants import PERSONAL_TYPES
+from app.handlers.keyboards.keyboard import inline_builder, markup_keyboard
+from app.handlers.states.states import Test
+from app.handlers.validators.validator import validate_bool_answer
+from core.config import settings
+from utils.http_client import HttpClient
 
 
-@form_router.message(Register.name)
-async def get_name(message: Message, state: FSMContext) -> None:
-    answer = message.text
-    await state.update_data(name=answer)
-    await state.set_state(Register.age)
-    await message.answer('Введите свою Дату рождения:')
+question_router = Router()
 
 
-@form_router.message(Register.age)
-async def get_age(message: Message, state: FSMContext):
-    answer = message.text
-    datetime.strptime(answer, '%d.%m.%Y')
-    await state.update_data(age=answer)
-    await state.set_state(Register.gender)
-    await message.answer('Укажите Ваш Пол:', reply_markup=kb_gender)
+@question_router.message(Command('starttest'))
+async def start_test(message: Message, state: FSMContext):
+    """Получаем список тестов и отправляем пользователю на выбор."""
+    async with HttpClient() as session:
+        tests = await session.get(f'{settings.HOST}api/tests/')
+    await state.set_state(Test.choose_test)
+    await message.answer(
+        "Выберите тест:",
+        reply_markup=inline_builder(tests).as_markup()
+    )
 
 
-@form_router.message(Register.gender)
-async def get_gender(message: Message, state: FSMContext):
-    answer = message.text
-    if answer == 'Мужской' or answer == 'Женский':
-        await state.update_data(gender=answer)
-    else:
-        await message.answer('Не соответствует вариантам: Мужской, Женский!!!')
-        raise ValueError('Не соответствует вариантам!!!')
-    await state.set_state(Register.email)
-    await message.answer('Укажите электронную почту:')
+@question_router.callback_query(Test.choose_test)
+async def choose_test(query: CallbackQuery, state: FSMContext):
+    test_id = query.data
+    async with HttpClient() as session:
+        response = await session.get(f'{settings.HOST}api/test/{test_id}/')
+    await state.update_data(testId=test_id)
+    position = 0
+    questions = response['questions']
+    await state.update_data(questions=questions,
+                            telegram_id=query.from_user.id,
+                            position=position)
+    await query.message.delete()
+    await state.set_state(Test.register_participant.name)
+    await query.message.answer("Введите Имя респондента:")
 
 
-@form_router.message(Register.email)
-async def email(message: Message, state: FSMContext):
-    answer = message.text
-    if validate_email(answer) is True:
-        await state.update_data(email=answer)
-    else:
-        await message.answer('Почта неверно написана. Попробуй снова.')
-        raise ValueError('Неверное имя почты')
+@question_router.message(Test.answers)
+async def questions(message: Message, state: FSMContext):
     data = await state.get_data()
-    name = data.get('name')
-    age = data.get('age')
-    gender = data.get('gender')
-    email = data.get('email')
-    await message.answer('Твои ответы: '
-                         f'Имя: {name}, '
-                         f'дата рождения: {age}, '
-                         f'пол - {gender}, почта - {email}')
-    await state.finish()
+    position = data.get('position')
+    questions = data.get('questions')
+    question_type = questions[position]['type']
+    answer = message.text
+    if question_type == "multiple_choice":
+        if not validate_bool_answer(answer):
+            await message.answer(
+                "Введите Да или Нет или воспользуйтесь клавиатурой."
+            )
+            return
+    await state.update_data({f"answer_{position}": answer})
+    new_position = position + 1
+    await state.update_data(position=new_position)
+    if new_position > len(questions)-1:
+        updated_data = await state.get_data()
+        test_data = prepare_data(updated_data)
+        async with HttpClient() as session:
+            response = await session.post(f'{settings.HOST}api/submit/',
+                                          test_data)
+        print(test_data)
+        await message.answer(
+            "Спасибо за то, что прошли наш тест.",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        await state.clear()
+    else:
+        await message.answer(
+            questions[new_position]['question'],
+            reply_markup=markup_keyboard(
+                questions[new_position]['type']
+            )
+        )
+
+
+def prepare_data(data: dict):
+    test_id = data.get('testId')
+    prepared_data = {"testId": test_id,
+                     'questions': prepare_answers(data),
+                     'participant': prepare_participant_data(data)}
+    return prepared_data
+
+
+def prepare_answers(data: dict):
+    questions = data.get('questions')
+    question_list = []
+    for n in range(0, len(questions)):
+        answer = {
+            "questionId": questions[n]['questionId'],
+            "type": questions[n]['type'],
+            "answer": data.get(f'answer_{n}')
+        }
+        question_list.append(answer)
+    return question_list
+
+
+def prepare_participant_data(data: dict):
+    participant_data = {}
+    for type in PERSONAL_TYPES:
+        if data.get(type):
+            participant_data[type] = data.get(type)
+        else:
+            participant_data[type] = None
+    return participant_data

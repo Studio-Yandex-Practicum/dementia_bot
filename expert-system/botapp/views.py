@@ -33,7 +33,8 @@ def submit_test(request):
     validated_data = serializer.validated_data
     test_id = validated_data['testId']
     questions = validated_data['questions']
-    participant = create_participant(questions, test_id)
+    participant_data = validated_data['participant']
+    participant = create_participant(participant_data, test_id)
     create_user_answers(participant, questions, test_id)
 
     return Response({"message": "Тест завершен успешно!"},
