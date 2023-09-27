@@ -27,12 +27,12 @@ jobs:
       - name: Install dependencies
         run: poetry install -C bot --no-interaction --no-root
       - name: Run black
-        run: poetry run black . --check
+        run: poetry run -C bot black . --check
       - name: Run isort
-        run: poetry run isort . --check-only --profile black
+        run: poetry run -C bot isort . --check-only --profile black
       - name: Run flake8
-        run: poetry run flake8 .
+        run: poetry run -C bot flake8 .
       - name: Run bandit
-        run: poetry run bandit .
+        run: poetry run -C bot bandit .
       - name: Run saftey
-        run: poetry run safety check
+        run: poetry run -C bot safety check
