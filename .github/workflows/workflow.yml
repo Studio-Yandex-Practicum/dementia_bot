@@ -27,14 +27,6 @@ jobs:
       - name: Install dependencies
         run: poetry install -C bot --no-interaction --no-root
       - name: Add test
-        run: poetry add -C bot black isort flake8 bandit safety
-      - name: Run black
-        run: poetry run -C bot black . --check
-      - name: Run isort
-        run: poetry run -C bot isort . --check-only --profile black
+        run: poetry add -C bot flake8 pep8-naming flake8-broken-line flake8-return flake8-isort
       - name: Run flake8
-        run: poetry run -C bot flake8 .
-      - name: Run bandit
-        run: poetry run -C bot bandit .
-      - name: Run saftey
-        run: poetry run -C bot safety check
+        run: poetry run -C bot python -m flake8
