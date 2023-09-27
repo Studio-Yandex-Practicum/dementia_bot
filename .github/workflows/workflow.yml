@@ -24,9 +24,9 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
-      - name: Install dependencies
-        run: poetry install -C bot --no-interaction --no-root
-      - name: Add test
-        run: poetry add -C bot flake8 pep8-naming flake8-broken-line flake8-return flake8-isort
+      - name: poetry init
+        run: poetry init
+      - name: Install flake8
+        run: poetry add flake8 pep8-naming flake8-broken-line flake8-return flake8-isort
       - name: Run flake8
-        run: poetry run -C bot python -m flake8
+        run: poetry run python -m flake8
