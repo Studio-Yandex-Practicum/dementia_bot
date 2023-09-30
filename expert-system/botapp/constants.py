@@ -6,7 +6,16 @@ QUESTION_TYPES = [
     ('occupation', 'Профессия/образование'),
     ('telegram_id', 'ID Telegram'),
     ('text', 'Текст'),
-    ('multiple_choice', 'Выбор да/нет'),
+    ('radio', 'Выбор да/нет'),
+    ('date', 'Выбор даты'),
+    ('text&pictures', 'Текст и картинки'),
+    ('buttons', 'Кнопки'),
+    ('file', 'Файл'),
+    ('drawing', 'Рисунок'),
+    ('countries', 'Страны'),
+    ('circle', 'Круг'),
+    ('triangle', 'Треугольник'),
+    ('final', 'Финальный вопрос')
 ]
 
 
@@ -20,3 +29,12 @@ EMAIL_REGEX = '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]+(?<=.)\S{1,}$'
 
 PERSONAL_DETAILS = ['name', 'birthdate', 'gender',
                     'occupation', 'email', 'telegram_id']
+
+
+OPTION_CHOICES = (
+    ('yes', 'Да'),
+    ('no', 'Нет'),
+    ('sometimes', 'Иногда'),
+    ('male', 'Мужской'),
+    ('female', 'Женский'),
+)
