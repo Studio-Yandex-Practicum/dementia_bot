@@ -1,5 +1,6 @@
 import botapp.constants as const
 from django.db import models
+from django.utils.html import format_html
 
 
 class Test(models.Model):
@@ -7,8 +8,12 @@ class Test(models.Model):
 
     title = models.CharField(max_length=255, verbose_name="Название теста")
     description = models.TextField(blank=True, verbose_name="Описание теста")
-    questions = models.ManyToManyField('Question', related_name='tests',
-                                       verbose_name="Вопросы в тесте", blank=True)
+    questions = models.ManyToManyField(
+                    'Question',
+                    related_name='tests',
+                    verbose_name="Вопросы в тесте",
+                    blank=True
+                    )
 
     class Meta:
         verbose_name = "Тест"
@@ -26,6 +31,9 @@ class Question(models.Model):
     """
 
     text = models.TextField(verbose_name="Текст вопроса")
+    count = models.PositiveIntegerField(
+                    default=1, verbose_name="Ожидаемое количество ответов"
+                    )
     question_type = models.CharField(max_length=50,
                                      choices=const.QUESTION_TYPES,
                                      default='text',
@@ -37,6 +45,40 @@ class Question(models.Model):
     class Meta:
         verbose_name = "Вопрос"
         verbose_name_plural = "Вопросы"
+
+
+class QuestionImage(models.Model):
+    """Изображения для вопросов."""
+    question = models.ForeignKey(Question, related_name='images',
+                                 on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='questions_images/',
+                              verbose_name="Изображение")
+
+    def image_tag(self):
+        """Отображение изображения в админке."""
+
+        return format_html('<img src="{}" width="50" height="50" />',
+                           self.image.url)
+
+    image_tag.short_description = 'Изображение'
+    image_tag.allow_tags = True
+
+
+class Option(models.Model):
+    question = models.ForeignKey(Question, related_name='options',
+                                 on_delete=models.CASCADE)
+    text = models.CharField(max_length=50, choices=const.OPTION_CHOICES,
+                            verbose_name="Текст варианта ответа")
+    requires_explanation = models.BooleanField(
+                            default=False, verbose_name="Требует пояснение?"
+                            )
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        verbose_name = "Вариант ответа"
+        verbose_name_plural = "Варианты ответов"
 
 
 class UserAnswer(models.Model):

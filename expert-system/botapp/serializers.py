@@ -1,18 +1,87 @@
-from botapp.models import Question, Test
-from botapp.validators import validate_dob, validate_email
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+
+from botapp.constants import OPTION_CHOICES
+from botapp.models import Question, QuestionImage, Test
+from botapp.validators import validate_dob, validate_email
+
+OPTION_CHOICES_DICT = dict(OPTION_CHOICES)
+
+
+class OptionSerializer(serializers.Serializer):
+    """Сериализатор для вариантов ответов."""
+
+    text = serializers.CharField()
+    requiresExplanation = serializers.BooleanField(
+        source='requires_explanation'
+    )
+
+    class Meta:
+        fields = ('text', 'requiresExplanation')
+
+
+class QuestionImageSerializer(serializers.Serializer):
+    """Сериализатор для изображений вопросов."""
+
+    class Meta:
+        model = QuestionImage
+        fields = ('image',)
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    """Сериализатор для отдачи вопросов. Переопределил поля как в задании."""
+    """Сериализатор для отдачи вопросов теста."""
 
     questionId = serializers.IntegerField(source='id')
     type = serializers.CharField(source='question_type')
     question = serializers.CharField(source='text')
+    count = serializers.IntegerField()
+    options = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ('questionId', 'type', 'question')
+        fields = ('questionId', 'type', 'question',
+                  'count', 'options', 'image_url')
+
+    def to_representation(self, instance):
+        """Переопределяем метод to_representation и убираем пустые поля в ответе.
+           В принципе, их можно оставить. Тогда просто удаляем метод целиком.
+           Протестировано, все работает при удалении.
+        """
+
+        representation = super().to_representation(instance)
+
+        if not representation['options']:
+            representation.pop('options')
+        if representation['count'] == 1:
+            representation.pop('count')
+        if not representation['image_url']:
+            representation.pop('image_url')
+        return representation
+
+    def get_options(self, obj):
+        """Возвращает список вариантов ответов для данного вопроса."""
+
+        options_list = []
+
+        for option in obj.options.all():
+            translated_text = OPTION_CHOICES_DICT.get(option.text, option.text)
+
+            # Если опция требует объяснения, добавляем поле requiresExplanation
+            if option.requires_explanation:
+                options_list.append(
+                    {"text": translated_text,
+                     "requiresExplanation": option.requires_explanation}
+                    )
+            else:
+                options_list.append(translated_text)
+
+        return options_list
+
+    def get_image_url(self, obj):
+        """Возвращает список урлов изображений для данного вопроса."""
+
+        return [img.image.url for img in obj.images.all()]
 
 
 class TestSerializer(serializers.ModelSerializer):
@@ -22,7 +91,7 @@ class TestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Test
-        fields = ('title', 'questions')
+        fields = ('questions', )
 
 
 class QuestionWithAnswerSerializer(serializers.Serializer):
@@ -70,7 +139,7 @@ class TestDataSerializer(serializers.Serializer):
         test_id = data.get('testId')
         questions_count_in_request = len(data.get('questions', []))
 
-        test = Test.objects.get(id=test_id)
+        test = get_object_or_404(Test.objects.all(), id=test_id)
         questions_count_in_test = test.questions.count()
 
         if questions_count_in_request != questions_count_in_test:
