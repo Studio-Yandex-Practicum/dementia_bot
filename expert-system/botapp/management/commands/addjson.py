@@ -1,6 +1,6 @@
 import json
 
-from botapp.models import Question
+from botapp.models import Question, Test
 from django.core.management.base import BaseCommand, CommandError
 
 
@@ -15,10 +15,12 @@ class Command(BaseCommand):
                 encoding='UTF-8'
             ) as jsonfile:
                 reader = json.load(jsonfile)
-                for row in reader:
+                for row in reader['questions']:
                     Question.objects.get_or_create(
-                        text=row.get('text'),
-                        question_type=row.get('question_type')
+                        questionId=row.get('questionId'),
+                        question=row.get('question'),
+                        score=row.get('score'),
+                        type=row.get('type')
                     )
         except FileNotFoundError:
             raise CommandError('Добавьте файл questions.json в директорию data')

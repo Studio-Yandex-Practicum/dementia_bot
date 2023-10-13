@@ -6,9 +6,9 @@ from rest_framework import serializers
 class QuestionSerializer(serializers.ModelSerializer):
     """Сериализатор для отдачи вопросов. Переопределил поля как в задании."""
 
-    questionId = serializers.IntegerField(source='id')
-    type = serializers.CharField(source='question_type')
-    question = serializers.CharField(source='text')
+    questionId = serializers.IntegerField()
+    type = serializers.CharField()
+    question = serializers.CharField()
 
     class Meta:
         model = Question
@@ -51,7 +51,6 @@ class TestDataSerializer(serializers.Serializer):
 
     def validate_data_integrity(self, data):
         """Проверяем, что данные от пользователя валидны."""
-
         questions = data.get('questions', [])
 
         for question in questions:
@@ -62,11 +61,7 @@ class TestDataSerializer(serializers.Serializer):
                 raise serializers.ValidationError('Неверный формат данных')
 
     def validate_question_count(self, data):
-        """
-        Проверяем, что количество ответов соответствует
-        количеству вопросов в тесте.
-        """
-
+        """Проверяем, количество ответов равно количеству вопросов в тесте."""
         test_id = data.get('testId')
         questions_count_in_request = len(data.get('questions', []))
 
@@ -82,22 +77,20 @@ class TestDataSerializer(serializers.Serializer):
 
     def validate_birthdate(self, data):
         """Проверяем, что дата рождения валидна."""
-
-        self.validate_question_type(data, 'birthdate', validate_dob)
+        self.validate_type(data, 'birthdate', validate_dob)
 
     def validate_email(self, data):
         """Проверяем, что email валиден."""
+        self.validate_type(data, 'email', validate_email)
 
-        self.validate_question_type(data, 'email', validate_email)
-
-    def validate_question_type(self, data, target_type, validation_function):
+    def validate_type(self, data, target_type, validation_function):
         questions = data.get('questions', [])
 
         for question in questions:
-            question_type = question.get('type')
+            type = question.get('type')
             answer = question.get('answer')
 
-            if question_type == target_type:
+            if type == target_type:
                 validation_function(answer)
 
 

@@ -7,8 +7,10 @@ class Test(models.Model):
 
     title = models.CharField(max_length=255, verbose_name="Название теста")
     description = models.TextField(blank=True, verbose_name="Описание теста")
-    questions = models.ManyToManyField('Question', related_name='tests',
-                                       verbose_name="Вопросы в тесте", blank=True)
+    questions = models.ManyToManyField('Question',
+                                       related_name='tests',
+                                       verbose_name="Вопросы в тесте",
+                                       blank=True)
 
     class Meta:
         verbose_name = "Тест"
@@ -21,18 +23,25 @@ class Test(models.Model):
 class Question(models.Model):
     """
     Вопросы для тестов. Есть возможность выбрать тип вопроса.
+
     Подразумевается, что баллы за ответы на вопросы да/нет фиксированные.
     Если нет, то надо менять модель.
     """
 
-    text = models.TextField(verbose_name="Текст вопроса")
-    question_type = models.CharField(max_length=50,
-                                     choices=const.QUESTION_TYPES,
-                                     default='text',
-                                     verbose_name="Тип вопроса")
+    question = models.TextField(verbose_name="Текст вопроса")
+    questionId = models.IntegerField(
+        primary_key=True,
+        verbose_name="Номер вопроса"
+        )
+    score = models.IntegerField(verbose_name="Максимальная оценка",
+                                null = True)
+    type = models.CharField(max_length=50,
+                            choices=const.QUESTION_TYPES,
+                            default='text',
+                            verbose_name="Тип вопроса")
 
     def __str__(self):
-        return self.text[:50]
+        return self.question[:50]
 
     class Meta:
         verbose_name = "Вопрос"
@@ -42,6 +51,7 @@ class Question(models.Model):
 class UserAnswer(models.Model):
     """
     Ответы пользователей на вопросы.
+
     Подразумевается, что баллы за ответы на вопросы да/нет фиксированные.
     """
 
@@ -95,7 +105,6 @@ class TestParticipant(models.Model):
     @classmethod
     def create_from_data(cls, test_id, age, data_dict):
         """Создание участника теста."""
-
         participant = cls(
             test_id=test_id,
             email=data_dict['email'],
