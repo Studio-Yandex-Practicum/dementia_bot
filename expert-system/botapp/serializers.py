@@ -107,3 +107,14 @@ class TestReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Test
         fields = ('id', 'title',)
+
+
+class JSONFieldSerializer(serializers.Serializer):
+    questionId = serializers.IntegerField(min_value=1, max_value=53)
+    type = serializers.CharField()
+    score = serializers.IntegerField(min_value=0)
+    question = serializers.CharField()
+
+
+class JSONSerializer(serializers.Serializer):
+    questions = JSONFieldSerializer(many=True)
