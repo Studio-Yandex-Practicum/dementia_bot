@@ -6,17 +6,16 @@ from botapp.models import TestParticipant, UserAnswer
 
 def create_participant(questions, test_id):
     """Создание участника теста."""
-
     data_dict = {}
 
     for question in questions:
-        question_type = question['type']
+        type = question['type']
 
-        if question_type in PERSONAL_DETAILS:
-            data_dict[question_type] = question['answer']
+        if type in PERSONAL_DETAILS:
+            data_dict[type] = question['answer']
 
         else:
-            data_dict[question_type] = None
+            data_dict[type] = None
 
     dob_str = data_dict['birthdate']
 
@@ -33,12 +32,11 @@ def create_participant(questions, test_id):
 
 def create_user_answers(participant, questions, test_id):
     """Создание ответов пользователя."""
-
     total_test_score = 0
 
     questions_dict = {
-                      q['questionId']: q['answer'] 
-                      for q in questions 
+                      q['questionId']: q['answer']
+                      for q in questions
                       if q['type'] not in PERSONAL_DETAILS
                     }
 

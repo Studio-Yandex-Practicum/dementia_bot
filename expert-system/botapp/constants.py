@@ -5,7 +5,7 @@ QUESTION_TYPES = [
     ('email', 'Электронная почта'),
     ('occupation', 'Профессия/образование'),
     ('telegram_id', 'ID Telegram'),
-    ('text', 'Текст'),
+    ('question', 'Текст'),
     ('multiple_choice', 'Выбор да/нет'),
 ]
 

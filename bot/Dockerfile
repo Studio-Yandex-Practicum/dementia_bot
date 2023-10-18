@@ -38,4 +38,4 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY . .
 
 RUN chmod +x docker-entrypoint.sh
-ENTRYPOINT [ "/bot/docker-entrypoint.sh" ]
+ENTRYPOINT ["sh", "/bot/docker-entrypoint.sh"]

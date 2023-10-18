@@ -39,9 +39,7 @@ question_router = Router()
 @question_router.message(Command("cancel"))
 @question_router.message(F.text.casefold() == "отмена")
 async def cancel_handler(message: Message, state: FSMContext) -> None:
-    """
-    Allow user to cancel any action
-    """
+    """Allow user to cancel any action."""
     current_state = await state.get_state()
     if current_state is None:
         return
@@ -87,30 +85,30 @@ async def questions(message: Message, state: FSMContext):
     data = await state.get_data()
     position = data.get('position')
     questions = data.get('questions')
-    question_type = questions[position]['type']
+    type = questions[position]['type']
     answer = message.text
-    if question_type == "multiple_choice":
+    if type == "multiple_choice":
         if not validate_bool_answer(answer):
             await message.answer(
                 "Введите Да или Нет или воспользуйтесь клавиатурой."
             )
             return
-    elif question_type in PERSONAL_TYPES:
-        if question_type == 'birthdate':
+    elif type in PERSONAL_TYPES:
+        if type == 'birthdate':
             if not validate_birthday(answer):
                 await message.answer(
                     "Пожалуйста введите дату рождения в формате ДД.ММ.ГГГГ."
                 )
                 return
             answer = str(datetime.strptime(answer, '%d.%m.%Y').date())
-        elif question_type == 'gender':
+        elif type == 'gender':
             if not validate_gender(answer):
                 await message.answer(
                     "Ваш ответ не соответствует вариантам Мужской/Женский."
                 )
                 return
             answer = GENDER_CHOICES[answer]
-        elif question_type == 'email':
+        elif type == 'email':
             if not validate_email(answer):
                 await message.answer('Почта неверно написана. Попробуй снова.')
                 return
@@ -151,8 +149,8 @@ def inline_builder(tests: list):
     return builder
 
 
-def markup_keyboard(question_type):
-    if question_type == "multiple_choice":
+def markup_keyboard(type):
+    if type == "multiple_choice":
         markup = ReplyKeyboardMarkup(
             keyboard=[
                 [
