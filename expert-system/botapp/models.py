@@ -94,6 +94,11 @@ class TestParticipant(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True,
                                      verbose_name="Время прохождения")
     total_score = models.IntegerField(default=0, verbose_name="Общий балл")
+    result = models.CharField(
+        choices=const.RESULT_CHOISES,
+        verbose_name="Результат прохождения теста",
+        default=const.NOTEND
+    )
 
     class Meta:
         verbose_name = "Участник теста"
