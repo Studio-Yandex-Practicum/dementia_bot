@@ -72,7 +72,7 @@ def create_user_answers(participant, questions, test_id):
                 else:
                     score += 0
         elif question_id == 16:
-            right_answer = ['цветы', 'цветок', 'растения', 'растение', 'природа/флора']
+            right_answer = ['цветы', 'цветок', 'растения', 'растение', 'природа', 'флора']
             if answer_text.lower() in right_answer:
                 score = 1
         elif question_id == 17:
