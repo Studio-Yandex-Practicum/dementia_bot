@@ -1,6 +1,7 @@
-from botapp.models import Test
+from botapp.models import Test, TestParticipant
 from botapp.serializers import (TestDataSerializer, TestReadSerializer,
-                                TestSerializer, JSONSerializer)
+                                TestSerializer, JSONSerializer,
+                                TestResultParticipantSerializer)
 from botapp.utils import create_participant, create_user_answers
 from botapp.constants import (SELF_MESSAGE_ONE, SELF_MESSAGE_TWO,SELF_MESSAGE_THREE,
                         RELATIVE_MESSAGE_ONE, RELATIVE_MESSAGE_TWO, RELATIVE_MESSAGE_THREE)
@@ -70,3 +71,18 @@ def submit_result(request):
         message = SELF_MESSAGE_ONE
 
     return Response(message, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def get_result(request, telegram_id):
+    """
+    Получаем JSON с результатами прохождения теста
+    участника с указанным telegram_id.
+    """
+    try:
+        result = TestParticipant.objects.get(telegram_id=telegram_id)
+        serializer = TestResultParticipantSerializer(result)
+        return Response(serializer.data)
+    except TestResultParticipantSerializer.DoesNotExist:
+        return Response({"error": "Указанный участник не найден"},
+                        status=status.HTTP_404_NOT_FOUND)

@@ -18,7 +18,7 @@ class UserTestProfileAdmin(admin.ModelAdmin):
     list_display = ('timestamp', 'name', 'telegram_id',
                     'email', 'age', 'test',
                     'gender', 'profession',
-                    'total_score')
+                    'total_score', 'result')
 
 
 @admin.register(Question)

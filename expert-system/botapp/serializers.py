@@ -1,4 +1,4 @@
-from botapp.models import Question, Test
+from botapp.models import Question, Test, TestParticipant
 from botapp.validators import validate_dob, validate_email
 from rest_framework import serializers
 
@@ -111,3 +111,11 @@ class JSONFieldSerializer(serializers.Serializer):
 
 class JSONSerializer(serializers.Serializer):
     questions = JSONFieldSerializer(many=True)
+
+
+class TestResultParticipantSerializer(serializers.ModelSerializer):
+    """Сериализатор для получения результатов прохождения теста участником."""
+
+    class Meta:
+        model = TestParticipant
+        fields = ('name', 'test', 'total_score', 'result')
