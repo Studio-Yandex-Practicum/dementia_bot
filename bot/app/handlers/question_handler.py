@@ -129,7 +129,7 @@ async def questions(message: Message, state: FSMContext):
         json_data = prepare_answers(updated_data)
         print(json_data)
         async with HttpClient() as session:
-            response = await session.post(f'{settings.HOST}api/submit_result/',
+            response = await session.post(f'{settings.HOST}api/submit/',
                                           json_data)
 
         finish_markup = ReplyKeyboardRemove()  # Убрать клавиатуру
