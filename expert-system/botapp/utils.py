@@ -16,7 +16,7 @@ def create_participant(questions, test_id):
 
         else:
             data_dict[type] = None
-
+    print(data_dict['birthdate'])
     dob_str = data_dict['birthdate']
 
     if dob_str:

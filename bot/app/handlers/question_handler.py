@@ -5,33 +5,20 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import (CallbackQuery, KeyboardButton, Message,
                            ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from validate_email import validate_email
 
 from app.handlers.handler_constants import PERSONAL_TYPES, GENDER_CHOICES
 from app.handlers.test.states import Question
+from app.handlers.test.keyboard import (markup_keyboard,
+                                        prepare_answers,
+                                        inline_builder)
 from app.handlers.validators.validator import (validate_birthday,
                                                validate_gender,
-                                               validate_bool_answer)
+                                               validate_bool_answer,
+                                               validate_score,
+                                               validate_email_address,
+                                               validate_current_day)
 from core.config import settings
 from utils.http_client import HttpClient
-
-tests = [
-    {
-        'name': "test1",
-        'id': 1
-    },
-    {
-        'name': "test2",
-        'id': 2
-    },
-    {
-        'name': "test3",
-        'id': 3
-    },
-
-]
-
 
 question_router = Router()
 
@@ -51,9 +38,13 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
     )
 
 
-@question_router.message(Command('starttest'))
+@question_router.message(Command('selecttest'))
 async def start_test(message: Message, state: FSMContext):
-    # Tут получаем список Тестов
+    async with HttpClient() as session:
+        response = await session.get(
+            f'{settings.HOST}api/tests')
+    tests = response
+
     await state.set_state(Question.test)
     await message.answer(
         "Выберите тест:",
@@ -63,12 +54,12 @@ async def start_test(message: Message, state: FSMContext):
 
 @question_router.callback_query(Question.test)
 async def choose_test(query: CallbackQuery, state: FSMContext):
-    test_id = 1  # пока примем 1, далее будет браться из списка тестов
+    test_id = int(query.data)
     async with HttpClient() as session:
         response = await session.get(f'{settings.HOST}api/test/{test_id}/')
     await state.update_data(testId=test_id)
     position = 0
-    questions = response['questions']   # Тут получаем список вопросов
+    questions = response['questions']  # Тут получаем список вопросов
     await state.set_state(Question.answer)
     await state.update_data(questions=questions,
                             telegram_id=query.from_user.id)
@@ -87,10 +78,12 @@ async def questions(message: Message, state: FSMContext):
     questions = data.get('questions')
     type = questions[position]['type']
     answer = message.text
+
     if type == "multiple_choice":
         if not validate_bool_answer(answer):
             await message.answer(
-                "Введите Да или Нет или воспользуйтесь клавиатурой."
+                "Пожалуйста, выберите 'Да' или 'Нет' с помощью клавиатуры:",
+                reply_markup=markup_keyboard(questions[position]['type'])
             )
             return
     elif type in PERSONAL_TYPES:
@@ -104,88 +97,51 @@ async def questions(message: Message, state: FSMContext):
         elif type == 'gender':
             if not validate_gender(answer):
                 await message.answer(
-                    "Ваш ответ не соответствует вариантам Мужской/Женский."
+                    "Ваш ответ не соответствует вариантам Мужской/Женский.",
+                    reply_markup=markup_keyboard(questions[position]['type'])
                 )
                 return
-            answer = GENDER_CHOICES[answer]
+            answer = GENDER_CHOICES.get(answer)
         elif type == 'email':
-            if not validate_email(answer):
+            if not validate_email_address(answer):
                 await message.answer('Почта неверно написана. Попробуй снова.')
                 return
+        elif questions[position]['type'] == 'current_day':
+            if not validate_current_day(answer):
+                await message.answer(
+                    "Пожалуйста, введите текущий день недели ДД.ММ.ГГГГ :"
+                )
+                return
     await state.update_data({f"answer_{position}": answer})
+
     new_position = position + 1
-    if questions[new_position]['type'] == "telegram_id":
-        await state.update_data(
-            {f"answer_{new_position}": data.get('telegram_id')}
-        )
-        new_position += 1
-    await state.update_data(position=new_position)
-    if new_position > len(questions)-1:
+
+    if new_position < len(questions):
+        if questions[new_position]['type'] == "telegram_id":
+            await state.update_data(
+                {f"answer_{new_position}": data.get('telegram_id')}
+            )
+            new_position += 1
+
+    if new_position >= len(questions):
+        # Вопросы закончились, можно завершить тест
         updated_data = await state.get_data()
         json_data = prepare_answers(updated_data)
+        print(json_data)
         async with HttpClient() as session:
-            response = await session.post(f'{settings.HOST}api/submit/',
+            response = await session.post(f'{settings.HOST}api/submit_result/',
                                           json_data)
+
+        finish_markup = ReplyKeyboardRemove()  # Убрать клавиатуру
+
         await message.answer(
             "Спасибо за то, что прошли наш тест.",
-            reply_markup=ReplyKeyboardRemove(),
+            reply_markup=finish_markup,
         )
         await state.clear()
-
     else:
+        await state.update_data(position=new_position)
         await message.answer(
             questions[new_position]['question'],
-            reply_markup=markup_keyboard(
-                questions[new_position]['type']
-            )
+            reply_markup=markup_keyboard(questions[new_position]['type'])
         )
-
-
-def inline_builder(tests: list):
-    builder = InlineKeyboardBuilder()
-    for test in tests:
-        builder.button(text=test['name'], callback_data=str(test['id']))
-    builder.adjust(1, 1)
-    return builder
-
-
-def markup_keyboard(type):
-    if type == "multiple_choice":
-        markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="Да"),
-                    KeyboardButton(text="Нет")
-                ],
-                [
-                    KeyboardButton(text='Отмена'),
-                ],
-            ],
-            resize_keyboard=True
-        )
-    else:
-        markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Отмена'),
-                ],
-            ],
-            resize_keyboard=True
-        )
-    return markup
-
-
-def prepare_answers(data: dict):
-    questions = data.get('questions')
-    test_id = data.get('testId')
-    json_data = {"testId": test_id,
-                 "questions": []}
-    for n in range(0, len(questions)):
-        answer = {
-            "questionId": questions[n]['questionId'],
-            "type": questions[n]['type'],
-            "answer": data.get(f'answer_{n}')
-        }
-        json_data['questions'].append(answer)
-
-    return json_data
