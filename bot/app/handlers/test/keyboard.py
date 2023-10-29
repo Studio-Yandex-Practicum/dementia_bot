@@ -1,5 +1,7 @@
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, \
+    ReplyKeyboardRemove
+from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup, \
+    InlineKeyboardButton
 
 kb_gender = ReplyKeyboardMarkup(
     keyboard=[
@@ -21,20 +23,16 @@ def markup_keyboard(type):
 
     if type == "multiple_choice":
         buttons.append([
-            KeyboardButton(text="Да"),
-            KeyboardButton(text="Нет")
+            InlineKeyboardButton(text="Да", callback_data="Да"),
+            InlineKeyboardButton(text="Нет", callback_data="Нет")
         ])
     if type == "gender":
         buttons.append([
-            KeyboardButton(text="Мужской"),
-            KeyboardButton(text="Женский")
+            InlineKeyboardButton(text="Мужской", callback_data="Мужской"),
+            InlineKeyboardButton(text="Женский", callback_data="Женский")
         ])
-    # Добавьте обработку других типов вопросов, для которых нужны кнопки
-    if type == "telegram_id":
-        # Добавьте обработку типа "telegram_id"
-        return ReplyKeyboardRemove()
 
-    markup = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+    markup = InlineKeyboardMarkup(inline_keyboard=buttons)
     return markup
 
 

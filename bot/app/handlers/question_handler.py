@@ -60,7 +60,7 @@ async def choose_test(query: CallbackQuery, state: FSMContext):
         response = await session.get(f'{settings.HOST}api/test/{test_id}/')
     await state.update_data(testId=test_id)
     position = 0
-    questions = response['questions']  # Тут получаем список вопросов
+    questions = response['questions']
     await state.set_state(Question.answer)
     await state.update_data(questions=questions,
                             telegram_id=query.from_user.id)
@@ -134,34 +134,23 @@ async def questions(message: Message, state: FSMContext):
 
         finish_markup = ReplyKeyboardRemove()  # Убрать клавиатуру
 
-        await message.answer(
-            "Спасибо за то, что прошли наш тест.",
-            reply_markup=finish_markup,
-        )
+        telegram_id = message.from_user.id
+        async with HttpClient() as session:
+            response = await session.get(
+                f'{settings.HOST}api/get_result/{telegram_id}/')
+
+        result_data = response
+        result = result_data['result']
+        result_test = result_data['test']
+        tests_result(result_test, result)
+
+        await message.answer(tests_result(result_test, result))
+
         await state.clear()
     else:
         await state.update_data(position=new_position)
+        #await message.delete()
         await message.answer(
             questions[new_position]['question'],
             reply_markup=markup_keyboard(questions[new_position]['type'])
         )
-
-
-@question_router.message(Command('getresult'))
-async def get_test_result(message: Message, state: FSMContext):
-    data = await state.get_data()
-    telegram_id = message.from_user.id
-    async with HttpClient() as session:
-        response = await session.get(
-            f'{settings.HOST}api/get_result/{telegram_id}/')
-
-    result_data = response  # Получите данные результатов из ответа
-    total_score = result_data['total_score']
-    result = result_data['result']
-    result_test = result_data['test']
-    tests_result(result_test, result)
-
-    # Обработать результаты, например, отправьте их пользователю
-    await message.answer(f"Ваше количество баллов: {total_score}.\n"
-                         f"\n{tests_result(result_test, result)}")
-    await state.clear()
