@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from aiogram import F, Router
+from aiogram import F, Router, Bot
+from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import (CallbackQuery, KeyboardButton, Message,
@@ -22,6 +23,7 @@ from core.config import settings
 from utils.http_client import HttpClient
 
 question_router = Router()
+
 
 
 @question_router.message(Command("cancel"))
@@ -72,6 +74,7 @@ async def choose_test(query: CallbackQuery, state: FSMContext):
     await state.update_data(position=position)
 
 
+@question_router.callback_query(Question.answer)
 @question_router.message(Question.answer)
 async def questions(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -79,12 +82,14 @@ async def questions(message: Message, state: FSMContext):
     questions = data.get('questions')
     type = questions[position]['type']
     answer = message.text
+    message_id = message.message_id
+    print(message.chat.id)
+    chat_id = message.chat.id
 
     if type == "multiple_choice":
         if not validate_bool_answer(answer):
             await message.answer(
-                "Пожалуйста, выберите 'Да' или 'Нет' с помощью клавиатуры:",
-                reply_markup=markup_keyboard(questions[position]['type'])
+                reply_markup=markup_keyboard(questions[position]['type']).as_markup()
             )
             return
     elif type in PERSONAL_TYPES:
@@ -149,7 +154,8 @@ async def questions(message: Message, state: FSMContext):
         await state.clear()
     else:
         await state.update_data(position=new_position)
-        #await message.delete()
+        await message.delete()
+        await message.delete_message(chat_id, message_id)
         await message.answer(
             questions[new_position]['question'],
             reply_markup=markup_keyboard(questions[new_position]['type'])
