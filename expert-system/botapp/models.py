@@ -32,9 +32,9 @@ class Question(models.Model):
     questionId = models.IntegerField(
         primary_key=True,
         verbose_name="Номер вопроса"
-        )
+    )
     score = models.IntegerField(verbose_name="Максимальная оценка",
-                                null = True)
+                                null=True)
     type = models.CharField(max_length=50,
                             choices=const.QUESTION_TYPES,
                             default='text',
@@ -103,6 +103,7 @@ class TestParticipant(models.Model):
     class Meta:
         verbose_name = "Участник теста"
         verbose_name_plural = "Участники тестов"
+        get_latest_by = ('telegram_id', 'timestamp')
 
     def __str__(self):
         return f"{self.name} - {self.total_score}"
@@ -116,7 +117,7 @@ class TestParticipant(models.Model):
             name=data_dict['name'],
             age=age,
             telegram_id=data_dict['telegram_id'],
-            profession=data_dict['occupation'],
+            # profession=data_dict['occupation'],
             gender=data_dict['gender'],
         )
         participant.save()

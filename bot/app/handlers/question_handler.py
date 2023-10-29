@@ -11,6 +11,7 @@ from app.handlers.test.states import Question
 from app.handlers.test.keyboard import (markup_keyboard,
                                         prepare_answers,
                                         inline_builder)
+from app.handlers.test.test_result import tests_result
 from app.handlers.validators.validator import (validate_birthday,
                                                validate_gender,
                                                validate_bool_answer,
@@ -127,7 +128,6 @@ async def questions(message: Message, state: FSMContext):
         # Вопросы закончились, можно завершить тест
         updated_data = await state.get_data()
         json_data = prepare_answers(updated_data)
-        print(json_data)
         async with HttpClient() as session:
             response = await session.post(f'{settings.HOST}api/submit/',
                                           json_data)
@@ -145,3 +145,23 @@ async def questions(message: Message, state: FSMContext):
             questions[new_position]['question'],
             reply_markup=markup_keyboard(questions[new_position]['type'])
         )
+
+
+@question_router.message(Command('getresult'))
+async def get_test_result(message: Message, state: FSMContext):
+    data = await state.get_data()
+    telegram_id = message.from_user.id
+    async with HttpClient() as session:
+        response = await session.get(
+            f'{settings.HOST}api/get_result/{telegram_id}/')
+
+    result_data = response  # Получите данные результатов из ответа
+    total_score = result_data['total_score']
+    result = result_data['result']
+    result_test = result_data['test']
+    tests_result(result_test, result)
+
+    # Обработать результаты, например, отправьте их пользователю
+    await message.answer(f"Ваше количество баллов: {total_score}.\n"
+                         f"\n{tests_result(result_test, result)}")
+    await state.clear()
