@@ -113,22 +113,18 @@ def create_user_answers(participant, questions, test_id):
     participant.total_score = total_test_score
 
     if test_id == 1:  # Тест проверки себя
-        if total_test_score == 0:
-            participant.result = NOTEND
-        elif 0 <= total_test_score <= 5:
+        if 17 <= total_test_score <= 22:
+            participant.result = OK
+        elif 15 <= total_test_score <= 16:
+            participant.result = DEVIATIONS
+        elif total_test_score <= 14:
+            participant.result = DEMENTIA
+    else:  # Тест проверки родственника
+        if 0 <= total_test_score <= 5:
             participant.result = OK
         elif 6 <= total_test_score <= 14:
             participant.result = DEVIATIONS
         elif total_test_score >= 15:
             participant.result = DEMENTIA
-    else:  # Тест проверки родственника
-        if total_test_score == 0:
-            participant.result = NOTEND
-        elif 0 <= total_test_score <= 14:
-            participant.result = DEMENTIA
-        elif 15 <= total_test_score <= 16:
-            participant.result = DEVIATIONS
-        elif total_test_score >= 17:
-            participant.result = OK
 
     participant.save()

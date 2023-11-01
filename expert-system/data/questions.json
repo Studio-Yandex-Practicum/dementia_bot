@@ -2,25 +2,25 @@
     "questions": [
         {
             "questionId": 1,
-            "type": "self_name",
+            "type": "name",
             "score": 0,
             "question": "Введите Ваше Имя:"
         },
         {
             "questionId": 2,
-            "type": "birthday",
+            "type": "birthdate",
             "score": 0,
             "question": "Введите свою Дату рождения:"
         },
         {
             "questionId": 3,
-            "type": "self_gender",
+            "type": "gender",
             "score": 0,
             "question": "Укажите Ваш Пол:"
         },
         {
             "questionId": 4,
-            "type": "self_email",
+            "type": "email",
             "score": 0,
             "question": "Укажите электронную почту:"
         },
