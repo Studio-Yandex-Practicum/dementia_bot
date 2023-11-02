@@ -6,6 +6,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import (CallbackQuery, KeyboardButton, Message,
                            ReplyKeyboardMarkup, ReplyKeyboardRemove)
+from aiogram.methods.edit_message_text import EditMessageText
 
 from app.handlers.handler_constants import PERSONAL_TYPES, GENDER_CHOICES
 from app.handlers.test.states import Question
@@ -23,7 +24,6 @@ from core.config import settings
 from utils.http_client import HttpClient
 
 question_router = Router()
-
 
 
 @question_router.message(Command("cancel"))
@@ -74,7 +74,6 @@ async def choose_test(query: CallbackQuery, state: FSMContext):
     await state.update_data(position=position)
 
 
-@question_router.callback_query(Question.answer)
 @question_router.message(Question.answer)
 async def questions(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -89,7 +88,8 @@ async def questions(message: Message, state: FSMContext):
     if type == "multiple_choice":
         if not validate_bool_answer(answer):
             await message.answer(
-                reply_markup=markup_keyboard(questions[position]['type']).as_markup()
+                reply_markup=markup_keyboard(
+                    questions[position]['type']).as_markup()
             )
             return
     elif type in PERSONAL_TYPES:
@@ -154,9 +154,7 @@ async def questions(message: Message, state: FSMContext):
         await state.clear()
     else:
         await state.update_data(position=new_position)
-        await message.delete()
-        await message.delete_message(chat_id, message_id)
-        await message.answer(
-            questions[new_position]['question'],
-            reply_markup=markup_keyboard(questions[new_position]['type'])
-        )
+        new_question_text = questions[new_position]['question']
+        await message.edit_text(text=new_question_text,
+                                reply_markup=markup_keyboard(
+                                    questions[new_position]['type']))
