@@ -19,6 +19,10 @@ class UserTestProfileAdmin(admin.ModelAdmin):
                     'email', 'age', 'test',
                     'gender', 'profession',
                     'total_score', 'result')
+    readonly_fields = ('timestamp', 'name', 'telegram_id',
+                       'email', 'age', 'test',
+                       'gender', 'profession',
+                       'total_score', 'result')
 
 
 @admin.register(Question)
@@ -28,6 +32,7 @@ class QuestionAdmin(admin.ModelAdmin):
     def test_included(self, obj):
         """Возвращает список тестов, в которые включен вопрос."""
         return ", ".join([str(test.title) for test in obj.tests.all()])
+
     test_included.short_description = 'Тесты, в которые включен вопрос'
 
 

@@ -3,6 +3,8 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, \
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup, \
     InlineKeyboardButton
 
+from app.handlers.test.callback import AnswerCallback, Action, SexCallback, Sex
+
 kb_gender = ReplyKeyboardMarkup(
     keyboard=[
         [
@@ -35,6 +37,31 @@ def markup_keyboard(type):
     markup = InlineKeyboardMarkup(inline_keyboard=buttons)
     return markup
 
+def answer_keyboarder():
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text=Action.yes,
+        callback_data=AnswerCallback(action=Action.yes)
+    )
+    builder.button(
+        text=Action.no,
+        callback_data=AnswerCallback(action=Action.no)
+    )
+
+    return builder.as_markup()
+
+def sex_keyboarder():
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text=Sex.male,
+        callback_data=SexCallback(action=Sex.male)
+    )
+    builder.button(
+        text=Sex.female,
+        callback_data=SexCallback(action=Sex.female)
+    )
+
+    return builder.as_markup()
 
 def prepare_answers(data: dict):
     questions = data.get('questions')

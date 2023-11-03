@@ -1,18 +1,18 @@
 from datetime import datetime
 
 from aiogram import F, Router, Bot
-from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import (CallbackQuery, KeyboardButton, Message,
-                           ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from aiogram.methods.edit_message_text import EditMessageText
+from aiogram.types import (CallbackQuery, Message, ReplyKeyboardRemove)
 
 from app.handlers.handler_constants import PERSONAL_TYPES, GENDER_CHOICES
 from app.handlers.test.states import Question
 from app.handlers.test.keyboard import (markup_keyboard,
                                         prepare_answers,
-                                        inline_builder)
+                                        inline_builder,
+                                        answer_keyboarder,
+                                        sex_keyboarder)
+from app.handlers.test.callback import AnswerCallback, Action, SexCallback, Sex
 from app.handlers.test.test_result import tests_result
 from app.handlers.validators.validator import (validate_birthday,
                                                validate_gender,
@@ -71,28 +71,28 @@ async def choose_test(query: CallbackQuery, state: FSMContext):
         questions[0]['question'],
         reply_markup=markup_keyboard(questions[0]['type'])
     )
+    await state.update_data(message_id=query.message.message_id + 1)
     await state.update_data(position=position)
 
 
 @question_router.message(Question.answer)
-async def questions(message: Message, state: FSMContext):
+async def questions(message: Message, state: FSMContext, bot: Bot):
     data = await state.get_data()
     position = data.get('position')
+    message_id = data.get('message_id')
     questions = data.get('questions')
     type = questions[position]['type']
     answer = message.text
-    message_id = message.message_id
-    print(message.chat.id)
     chat_id = message.chat.id
 
-    if type == "multiple_choice":
-        if not validate_bool_answer(answer):
-            await message.answer(
-                reply_markup=markup_keyboard(
-                    questions[position]['type']).as_markup()
-            )
-            return
-    elif type in PERSONAL_TYPES:
+    #    if type == "multiple_choice":
+    #        if not validate_bool_answer(answer):
+    #            await message.answer(
+    #                reply_markup=answer_keyboarder(
+    #                    questions[position]['type']).as_markup()
+    #            )
+    #            return
+    if type in PERSONAL_TYPES:
         if type == 'birthdate':
             if not validate_birthday(answer):
                 await message.answer(
@@ -100,14 +100,14 @@ async def questions(message: Message, state: FSMContext):
                 )
                 return
             answer = str(datetime.strptime(answer, '%d.%m.%Y').date())
-        elif type == 'gender':
-            if not validate_gender(answer):
-                await message.answer(
-                    "Ваш ответ не соответствует вариантам Мужской/Женский.",
-                    reply_markup=markup_keyboard(questions[position]['type'])
-                )
-                return
-            answer = GENDER_CHOICES.get(answer)
+        #        elif type == 'gender':
+        #            if not validate_gender(answer):
+        #                await message.answer(
+        #                    "Ваш ответ не соответствует вариантам Мужской/Женский.",
+        #                    reply_markup=sex_keyboard(questions[position]['type'])
+        #                )
+        #                return
+        #            answer = GENDER_CHOICES.get(answer)
         elif type == 'email':
             if not validate_email_address(answer):
                 await message.answer('Почта неверно написана. Попробуй снова.')
@@ -115,7 +115,7 @@ async def questions(message: Message, state: FSMContext):
         elif questions[position]['type'] == 'current_day':
             if not validate_current_day(answer):
                 await message.answer(
-                    "Пожалуйста, введите текущий день недели ДД.ММ.ГГГГ :"
+                    "Пожалуйста, введите текущий день недели ДД.ММ.ГГГГ."
                 )
                 return
     await state.update_data({f"answer_{position}": answer})
@@ -149,12 +149,83 @@ async def questions(message: Message, state: FSMContext):
         result_test = result_data['test']
         tests_result(result_test, result)
 
-        await message.answer(tests_result(result_test, result))
-
+        await bot.edit_message_text(chat_id=chat_id,
+                                    message_id=message_id,
+                                    text=tests_result(result_test, result))
+        await message.delete()
         await state.clear()
     else:
         await state.update_data(position=new_position)
-        new_question_text = questions[new_position]['question']
-        await message.edit_text(text=new_question_text,
-                                reply_markup=markup_keyboard(
-                                    questions[new_position]['type']))
+        if questions[new_position]['type'] == 'gender':
+            await bot.edit_message_text(chat_id=chat_id,
+                                        message_id=message_id,
+                                        text=questions[new_position][
+                                            'question'],
+                                        reply_markup=sex_keyboarder()
+                                        )
+        elif questions[new_position]['type'] == "multiple_choice":
+            await bot.edit_message_text(chat_id=chat_id,
+                                        message_id=message_id,
+                                        text=questions[new_position][
+                                            'question'],
+                                        reply_markup=answer_keyboarder()
+                                        )
+        else:
+            await bot.edit_message_text(chat_id=chat_id,
+                                        message_id=message_id,
+                                        text=questions[new_position][
+                                            'question']
+                                        )
+        await message.delete()
+
+
+@question_router.callback_query(
+    AnswerCallback.filter(F.action.in_([Action.yes, Action.no])))
+async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
+                         state: FSMContext):
+    data = await state.get_data()
+    position = data.get('position')
+    questions = data.get('questions')
+    answer = 'Да'
+
+    # if callback_data.action == Action.yes:
+    #    answer = 'Да'
+    # else:
+    #    answer = 'Нет'
+
+    await state.update_data({f"answer_{position}": answer})
+    print(answer)
+    print(callback_data)
+    new_position = position + 1
+
+    new_question_text = questions[new_position]['question']
+    await query.message.edit_text(
+        text=new_question_text,
+        reply_markup=answer_keyboarder(questions[new_position]['type'])
+    )
+
+
+@question_router.callback_query(
+    AnswerCallback.filter(F.action.in_([Sex.male, Sex.female])))
+async def sex_handler(query: CallbackQuery, callback_data: SexCallback,
+                      state: FSMContext):
+    data = await state.get_data()
+    position = data.get('position')
+    questions = data.get('questions')
+    answer = 'Мужской'
+
+    # if callback_data.action == Sex.male:
+    #    answer = 'Мужской'
+    # else:
+    #    answer = 'Женский'
+
+    await state.update_data({f"answer_{position}": answer})
+    print(answer)
+    print(callback_data)
+    new_position = position + 1
+
+    new_question_text = questions[new_position]['question']
+    await query.message.edit_text(
+        text=new_question_text,
+        reply_markup=sex_keyboarder(questions[new_position]['type'])
+    )
