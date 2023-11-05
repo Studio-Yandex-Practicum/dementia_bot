@@ -84,15 +84,7 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
     type = questions[position]['type']
     answer = message.text
     chat_id = message.chat.id
-    print(message_id)
 
-    #    if type == "multiple_choice":
-    #        if not validate_bool_answer(answer):
-    #            await message.answer(
-    #                reply_markup=answer_keyboarder(
-    #                    questions[position]['type']).as_markup()
-    #            )
-    #            return
     if type in PERSONAL_TYPES:
         if type == 'birthdate':
             if not validate_birthday(answer):
@@ -101,14 +93,6 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
                 )
                 return
             answer = str(datetime.strptime(answer, '%d.%m.%Y').date())
-        #        elif type == 'gender':
-        #            if not validate_gender(answer):
-        #                await message.answer(
-        #                    "Ваш ответ не соответствует вариантам Мужской/Женский.",
-        #                    reply_markup=sex_keyboard(questions[position]['type'])
-        #                )
-        #                return
-        #            answer = GENDER_CHOICES.get(answer)
         elif type == 'email':
             if not validate_email_address(answer):
                 await message.answer('Почта неверно написана. Попробуй снова.')
@@ -131,14 +115,12 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
             new_position += 1
 
     if new_position >= len(questions):
-        # Вопросы закончились, можно завершить тест
+
         updated_data = await state.get_data()
         json_data = prepare_answers(updated_data)
         async with HttpClient() as session:
             response = await session.post(f'{settings.HOST}api/submit/',
                                           json_data)
-
-        finish_markup = ReplyKeyboardRemove()  # Убрать клавиатуру
 
         telegram_id = message.from_user.id
         async with HttpClient() as session:
@@ -148,7 +130,6 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
         result_data = response
         result = result_data['result']
         result_test = result_data['test']
-        tests_result(result_test, result)
 
         await bot.edit_message_text(chat_id=chat_id,
                                     message_id=message_id,
@@ -181,12 +162,12 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
                 text=questions[new_position]['question'],
                 reply_markup=None
             )
-        print(message_id)
+
         await message.delete()
 
 
 @question_router.callback_query(
-   AnswerCallback.filter(F.action.in_([Action.yes, Action.no])))
+    AnswerCallback.filter(F.action.in_([Action.yes, Action.no])))
 async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
                          state: FSMContext):
     data = await state.get_data()
@@ -199,16 +180,14 @@ async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
         answer = 'Нет'
 
     await state.update_data({f"answer_{position}": answer})
-    print(answer)
-    print(callback_data)
+
     new_position = position + 1
 
     new_question_text = questions[new_position]['question']
     await query.message.edit_text(
-        text=new_question_text
+        text=new_question_text,
+        reply_markup=None
     )
-
-
 
 
 @question_router.callback_query(
@@ -225,9 +204,13 @@ async def sex_handler(query: CallbackQuery, callback_data: SexCallback,
         answer = 'Женский'
 
     await state.update_data({f"answer_{position}": answer})
+    print(query.message.answer)
+    print(state)
+
     new_position = position + 1
 
     new_question_text = questions[new_position]['question']
     await query.message.edit_text(
-        text=new_question_text
+        text=new_question_text,
+        reply_markup=None
     )
