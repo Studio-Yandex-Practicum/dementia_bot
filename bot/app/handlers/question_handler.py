@@ -84,6 +84,7 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
     type = questions[position]['type']
     answer = message.text
     chat_id = message.chat.id
+    print(message_id)
 
     #    if type == "multiple_choice":
     #        if not validate_bool_answer(answer):
@@ -155,43 +156,47 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
         await message.delete()
         await state.clear()
     else:
+        await state.set_state(Question.answer)
         await state.update_data(position=new_position)
-        if questions[new_position]['type'] == 'gender':
-            await bot.edit_message_text(chat_id=chat_id,
-                                        message_id=message_id,
-                                        text=questions[new_position][
-                                            'question'],
-                                        reply_markup=sex_keyboarder()
-                                        )
-        elif questions[new_position]['type'] == "multiple_choice":
-            await bot.edit_message_text(chat_id=chat_id,
-                                        message_id=message_id,
-                                        text=questions[new_position][
-                                            'question'],
-                                        reply_markup=answer_keyboarder()
-                                        )
+        question_type = questions[new_position]['type']
+        print(message_id)
+        if question_type == 'gender':
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=questions[new_position]['question'],
+                reply_markup=sex_keyboarder()
+            )
+        elif question_type == 'multiple_choice':
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=questions[new_position]['question'],
+                reply_markup=answer_keyboarder()
+            )
         else:
-            await bot.edit_message_text(chat_id=chat_id,
-                                        message_id=message_id,
-                                        text=questions[new_position][
-                                            'question']
-                                        )
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=questions[new_position]['question'],
+                reply_markup=None
+            )
+        print(message_id)
         await message.delete()
 
 
 @question_router.callback_query(
-    AnswerCallback.filter(F.action.in_([Action.yes, Action.no])))
+   AnswerCallback.filter(F.action.in_([Action.yes, Action.no])))
 async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
                          state: FSMContext):
     data = await state.get_data()
     position = data.get('position')
     questions = data.get('questions')
-    answer = 'Да'
 
-    # if callback_data.action == Action.yes:
-    #    answer = 'Да'
-    # else:
-    #    answer = 'Нет'
+    if callback_data.action == Action.yes:
+        answer = 'Да'
+    else:
+        answer = 'Нет'
 
     await state.update_data({f"answer_{position}": answer})
     print(answer)
@@ -200,32 +205,29 @@ async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
 
     new_question_text = questions[new_position]['question']
     await query.message.edit_text(
-        text=new_question_text,
-        reply_markup=answer_keyboarder(questions[new_position]['type'])
+        text=new_question_text
     )
 
 
+
+
 @question_router.callback_query(
-    AnswerCallback.filter(F.action.in_([Sex.male, Sex.female])))
+    SexCallback.filter(F.action.in_([Sex.male, Sex.female])))
 async def sex_handler(query: CallbackQuery, callback_data: SexCallback,
                       state: FSMContext):
     data = await state.get_data()
     position = data.get('position')
     questions = data.get('questions')
-    answer = 'Мужской'
 
-    # if callback_data.action == Sex.male:
-    #    answer = 'Мужской'
-    # else:
-    #    answer = 'Женский'
+    if callback_data.action == Sex.male:
+        answer = 'Мужской'
+    else:
+        answer = 'Женский'
 
     await state.update_data({f"answer_{position}": answer})
-    print(answer)
-    print(callback_data)
     new_position = position + 1
 
     new_question_text = questions[new_position]['question']
     await query.message.edit_text(
-        text=new_question_text,
-        reply_markup=sex_keyboarder(questions[new_position]['type'])
+        text=new_question_text
     )
