@@ -32,9 +32,9 @@ class Question(models.Model):
     questionId = models.IntegerField(
         primary_key=True,
         verbose_name="Номер вопроса"
-        )
+    )
     score = models.IntegerField(verbose_name="Максимальная оценка",
-                                null = True)
+                                null=True)
     type = models.CharField(max_length=50,
                             choices=const.QUESTION_TYPES,
                             default='text',
@@ -90,19 +90,22 @@ class TestParticipant(models.Model):
     gender = models.CharField(max_length=1,
                               choices=const.GENDER_CHOICES,
                               verbose_name="Пол")
-    profession = models.CharField(max_length=255, verbose_name="Профессия")
+    profession = models.CharField(max_length=255,
+                                  verbose_name="Профессия",
+                                  default='Нет данных')
     timestamp = models.DateTimeField(auto_now_add=True,
                                      verbose_name="Время прохождения")
     total_score = models.IntegerField(default=0, verbose_name="Общий балл")
-    result = models.CharField(
-        choices=const.RESULT_CHOISES,
-        verbose_name="Результат прохождения теста",
-        default=const.NOTEND
+    result = models.CharField(max_length=255,
+                              choices=const.RESULT_CHOISES,
+                              verbose_name="Результат прохождения теста",
+                              default=const.NOTEND
     )
 
     class Meta:
         verbose_name = "Участник теста"
         verbose_name_plural = "Участники тестов"
+        get_latest_by = ('telegram_id', 'timestamp')
 
     def __str__(self):
         return f"{self.name} - {self.total_score}"
@@ -110,13 +113,18 @@ class TestParticipant(models.Model):
     @classmethod
     def create_from_data(cls, test_id, age, data_dict):
         """Создание участника теста."""
+        if 'occupation' in data_dict:
+            prof = data_dict['occupation']
+        else:
+            prof = const.NODATA
+
         participant = cls(
             test_id=test_id,
             email=data_dict['email'],
             name=data_dict['name'],
             age=age,
             telegram_id=data_dict['telegram_id'],
-            profession=data_dict['occupation'],
+            profession=prof,
             gender=data_dict['gender'],
         )
         participant.save()

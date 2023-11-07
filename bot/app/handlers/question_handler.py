@@ -1,37 +1,27 @@
 from datetime import datetime
 
-from aiogram import F, Router
+from aiogram import F, Router, Bot
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import (CallbackQuery, KeyboardButton, Message,
-                           ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from validate_email import validate_email
+from aiogram.types import (CallbackQuery, Message, ReplyKeyboardRemove)
 
 from app.handlers.handler_constants import PERSONAL_TYPES, GENDER_CHOICES
 from app.handlers.test.states import Question
+from app.handlers.test.keyboard import (markup_keyboard,
+                                        prepare_answers,
+                                        inline_builder,
+                                        answer_keyboarder,
+                                        sex_keyboarder)
+from app.handlers.test.callback import AnswerCallback, Action, SexCallback, Sex
+from app.handlers.test.test_result import tests_result
 from app.handlers.validators.validator import (validate_birthday,
                                                validate_gender,
-                                               validate_bool_answer)
+                                               validate_bool_answer,
+                                               validate_score,
+                                               validate_email_address,
+                                               validate_current_day)
 from core.config import settings
 from utils.http_client import HttpClient
-
-tests = [
-    {
-        'name': "test1",
-        'id': 1
-    },
-    {
-        'name': "test2",
-        'id': 2
-    },
-    {
-        'name': "test3",
-        'id': 3
-    },
-
-]
-
 
 question_router = Router()
 
@@ -51,9 +41,13 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
     )
 
 
-@question_router.message(Command('starttest'))
+@question_router.message(Command('selecttest'))
 async def start_test(message: Message, state: FSMContext):
-    # Tут получаем список Тестов
+    async with HttpClient() as session:
+        response = await session.get(
+            f'{settings.HOST}api/tests')
+    tests = response
+
     await state.set_state(Question.test)
     await message.answer(
         "Выберите тест:",
@@ -63,12 +57,12 @@ async def start_test(message: Message, state: FSMContext):
 
 @question_router.callback_query(Question.test)
 async def choose_test(query: CallbackQuery, state: FSMContext):
-    test_id = 1  # пока примем 1, далее будет браться из списка тестов
+    test_id = int(query.data)
     async with HttpClient() as session:
         response = await session.get(f'{settings.HOST}api/test/{test_id}/')
     await state.update_data(testId=test_id)
     position = 0
-    questions = response['questions']   # Тут получаем список вопросов
+    questions = response['questions']
     await state.set_state(Question.answer)
     await state.update_data(questions=questions,
                             telegram_id=query.from_user.id)
@@ -77,23 +71,21 @@ async def choose_test(query: CallbackQuery, state: FSMContext):
         questions[0]['question'],
         reply_markup=markup_keyboard(questions[0]['type'])
     )
+    await state.update_data(message_id=query.message.message_id + 1)
     await state.update_data(position=position)
 
 
 @question_router.message(Question.answer)
-async def questions(message: Message, state: FSMContext):
+async def questions(message: Message, state: FSMContext, bot: Bot):
     data = await state.get_data()
     position = data.get('position')
+    message_id = data.get('message_id')
     questions = data.get('questions')
     type = questions[position]['type']
     answer = message.text
-    if type == "multiple_choice":
-        if not validate_bool_answer(answer):
-            await message.answer(
-                "Введите Да или Нет или воспользуйтесь клавиатурой."
-            )
-            return
-    elif type in PERSONAL_TYPES:
+    chat_id = message.chat.id
+
+    if type in PERSONAL_TYPES:
         if type == 'birthdate':
             if not validate_birthday(answer):
                 await message.answer(
@@ -101,91 +93,191 @@ async def questions(message: Message, state: FSMContext):
                 )
                 return
             answer = str(datetime.strptime(answer, '%d.%m.%Y').date())
-        elif type == 'gender':
-            if not validate_gender(answer):
-                await message.answer(
-                    "Ваш ответ не соответствует вариантам Мужской/Женский."
-                )
-                return
-            answer = GENDER_CHOICES[answer]
         elif type == 'email':
-            if not validate_email(answer):
+            if not validate_email_address(answer):
                 await message.answer('Почта неверно написана. Попробуй снова.')
                 return
+        elif questions[position]['type'] == 'current_day':
+            if not validate_current_day(answer):
+                await message.answer(
+                    "Пожалуйста, введите текущий день недели ДД.ММ.ГГГГ."
+                )
+                return
     await state.update_data({f"answer_{position}": answer})
+
     new_position = position + 1
-    if questions[new_position]['type'] == "telegram_id":
-        await state.update_data(
-            {f"answer_{new_position}": data.get('telegram_id')}
-        )
-        new_position += 1
-    await state.update_data(position=new_position)
-    if new_position > len(questions)-1:
+
+    if new_position < len(questions):
+        if questions[new_position]['type'] == "telegram_id":
+            await state.update_data(
+                {f"answer_{new_position}": data.get('telegram_id')}
+            )
+            new_position += 1
+
+    if new_position >= len(questions):
+
         updated_data = await state.get_data()
         json_data = prepare_answers(updated_data)
         async with HttpClient() as session:
             response = await session.post(f'{settings.HOST}api/submit/',
                                           json_data)
-        await message.answer(
-            "Спасибо за то, что прошли наш тест.",
-            reply_markup=ReplyKeyboardRemove(),
-        )
+
+        telegram_id = message.from_user.id
+        async with HttpClient() as session:
+            response = await session.get(
+                f'{settings.HOST}api/get_result/{telegram_id}/')
+
+        result_data = response
+        result = result_data['result']
+        result_test = result_data['test']
+
+        await bot.edit_message_text(chat_id=chat_id,
+                                    message_id=message_id,
+                                    text=tests_result(result_test, result))
+
+        await message.delete()
         await state.clear()
-
     else:
-        await message.answer(
-            questions[new_position]['question'],
-            reply_markup=markup_keyboard(
-                questions[new_position]['type']
+        await state.set_state(Question.answer)
+        await state.update_data(position=new_position)
+        question_type = questions[new_position]['type']
+        if question_type == 'gender':
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=questions[new_position]['question'],
+                reply_markup=sex_keyboarder()
             )
+        elif question_type == 'multiple_choice':
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=questions[new_position]['question'],
+                reply_markup=answer_keyboarder()
+            )
+        else:
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=questions[new_position]['question'],
+                reply_markup=None
+            )
+
+        await message.delete()
+
+
+@question_router.callback_query(
+    AnswerCallback.filter(F.action.in_([Action.yes, Action.no])))
+async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
+                         state: FSMContext, bot: Bot):
+    data = await state.get_data()
+    position = data.get('position')
+    questions = data.get('questions')
+    message_id = query.message.message_id
+    chat_id = query.message.chat.id
+
+    if callback_data.action == Action.yes:
+        answer = 'Да'
+    else:
+        answer = 'Нет'
+
+    await state.update_data({f"answer_{position}": answer})
+
+    new_position = position + 1
+    if new_position < len(questions):
+        if questions[new_position]['type'] == "telegram_id":
+            await state.update_data(
+                {f"answer_{new_position}": data.get('telegram_id')}
+            )
+            new_position += 1
+
+    if new_position >= len(questions):
+
+        updated_data = await state.get_data()
+        json_data = prepare_answers(updated_data)
+        async with HttpClient() as session:
+            response = await session.post(f'{settings.HOST}api/submit/',
+                                          json_data)
+
+        telegram_id = data.get('telegram_id')
+        async with HttpClient() as session:
+            response = await session.get(
+                f'{settings.HOST}api/get_result/{telegram_id}/')
+
+        result_data = response
+        result = result_data['result']
+        result_test = result_data['test']
+
+        await bot.edit_message_text(chat_id=chat_id,
+                                    message_id=message_id,
+                                    text=tests_result(result_test, result))
+        await state.clear()
+    else:
+        await state.update_data(position=new_position)
+
+        new_question_text = questions[new_position]['question']
+
+        if questions[new_position]['type'] == 'gender':
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=new_question_text,
+                reply_markup=sex_keyboarder()
+            )
+        elif questions[new_position]['type'] == 'multiple_choice':
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=new_question_text,
+                reply_markup=answer_keyboarder()
+            )
+        else:
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=new_question_text,
+                reply_markup=None
+            )
+
+
+@question_router.callback_query(
+    SexCallback.filter(F.action.in_([Sex.male, Sex.female])))
+async def sex_handler(query: CallbackQuery, callback_data: SexCallback,
+                      state: FSMContext, bot: Bot):
+    data = await state.get_data()
+    position = data.get('position')
+    questions = data.get('questions')
+    message_id = data.get('message_id')
+    chat_id = query.message.chat.id
+    if callback_data.action == Sex.male:
+        answer = 'Мужской'
+    else:
+        answer = 'Женский'
+    answer = GENDER_CHOICES[answer]
+    await state.update_data({f"answer_{position}": answer})
+
+    new_position = position + 1
+    await state.update_data(position=new_position)
+
+    new_question_text = questions[new_position]['question']
+    if questions[new_position]['type'] == 'gender':
+        await bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=new_question_text,
+            reply_markup=sex_keyboarder()
         )
-
-
-def inline_builder(tests: list):
-    builder = InlineKeyboardBuilder()
-    for test in tests:
-        builder.button(text=test['name'], callback_data=str(test['id']))
-    builder.adjust(1, 1)
-    return builder
-
-
-def markup_keyboard(type):
-    if type == "multiple_choice":
-        markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="Да"),
-                    KeyboardButton(text="Нет")
-                ],
-                [
-                    KeyboardButton(text='Отмена'),
-                ],
-            ],
-            resize_keyboard=True
+    elif questions[new_position]['type'] == 'multiple_choice':
+        await bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=new_question_text,
+            reply_markup=answer_keyboarder()
         )
     else:
-        markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Отмена'),
-                ],
-            ],
-            resize_keyboard=True
+        await bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=new_question_text,
+            reply_markup=None
         )
-    return markup
-
-
-def prepare_answers(data: dict):
-    questions = data.get('questions')
-    test_id = data.get('testId')
-    json_data = {"testId": test_id,
-                 "questions": []}
-    for n in range(0, len(questions)):
-        answer = {
-            "questionId": questions[n]['questionId'],
-            "type": questions[n]['type'],
-            "answer": data.get(f'answer_{n}')
-        }
-        json_data['questions'].append(answer)
-
-    return json_data
