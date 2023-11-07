@@ -1,9 +1,16 @@
 # dementia_bot
-бот для благотворительного фонда “ПАМЯТЬ ПОКОЛЕНИЙ”
+Бот для благотворительного фонда “ПАМЯТЬ ПОКОЛЕНИЙ”
 
-## Подготовка
+## Технологии
+- [![Aiogram](https://img.shields.io/badge/-Aiogram%203.0.0-464646?style=flat&logo=Nginxl&logoColor=ffffff&color=043A6B)](https://aiogram.dev)
+- [![Django](https://img.shields.io/badge/-Python%204.2.5-464646?style=flat&logo=Django&logoColor=ffffff&color=043A6B)](https://www.djangoproject.com)
+- [![Nginx](https://img.shields.io/badge/-Nginx%201.25-464646?style=flat&logo=Nginxl&logoColor=ffffff&color=043A6B)](https://www.nginx.com)
+- [![Postgresql](https://img.shields.io/badge/-Postgresql%2015-464646?style=flat&logo=Postgresql&logoColor=ffffff&color=043A6B)](https://www.postgresql.org)
+- [![Python](https://img.shields.io/badge/-Python%203.10-464646?style=flat&logo=Python&logoColor=ffffff&color=043A6B)](https://www.python.org/)
 
-### 1. Установка poetry
+### 1. Подготовка
+
+### Установка poetry
 Важно:
 - poetry ставится и запускается для каждого сервиса `bot`, `expert-system`
 - для первого запуска проекта в контейнерах будет достаточно создать и активировать окружение в папке `expert-system`
@@ -40,11 +47,52 @@ poetry --version
 ```bash
 poetry completions bash >> ~/.bash_completion
 ```
-### 1. Установка poetry
-1. Заполнить файлы .env согласно образцу
+### Запуск проекта
 
-2. ВЫполнить команду:
+1. Заполнить файлы .env согласно образцу:
+шаблон наполнения env-файла 
+```
+telegram_api_token='1111111111:AAbbCcddEEFFgG1234567890'
+WEBHOOK_MODE=False
+
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+DB_HOST=db
+DB_PORT=5432
+
+DJANGO_SUPERUSER_PASSWORD=pass
+DJANGO_SUPERUSER_EMAIL=admin@example.com
+DJANGO_SUPERUSER_USERNAME=admin
+```
+
+2. В случае запуска проекта на Windows:
+Рекомендуется установить "End of Line Sequence" LF в настройках точек входа "docker-entrypoint.sh" для обоих сервисов: `bot`, `expert-system`
+
+3. Выполнить команду:
 
 ```
 docker-compose -f ./infra/docker-compose.yaml up -d
+```
+### 2. Как это работает
+
+1. Администрирование проекта будет доступно по адресу http://127.0.0.1/admin
+
+2. Доступные команды бота: 
+
+Команда для начала работы, приветствия и вывода списка доступных тестов
+```
+/start
+```
+Команда только для вывода списка доступных тестов
+```
+/selecttest
+```
+Команды для отмены
+```
+/cancel
+```
+```
+отмена
 ```
