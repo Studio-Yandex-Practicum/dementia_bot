@@ -5,7 +5,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import (CallbackQuery, Message, ReplyKeyboardRemove)
 
-from app.handlers.handler_constants import PERSONAL_TYPES, GENDER_CHOICES
+from app.handlers.handler_constants import PERSONAL_TYPES, GENDER_CHOICES, START_MESSAGE
 from app.handlers.test.states import Question
 from app.handlers.test.keyboard import (markup_keyboard,
                                         prepare_answers,
