@@ -15,7 +15,6 @@ kb_gender = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-
 def finish_test_button():
     return KeyboardButton(text='Завершить тест')
 
@@ -37,6 +36,7 @@ def markup_keyboard(type):
     markup = InlineKeyboardMarkup(inline_keyboard=buttons)
     return markup
 
+
 def answer_keyboarder():
     builder = InlineKeyboardBuilder()
     builder.button(
@@ -50,6 +50,33 @@ def answer_keyboarder():
 
     return builder.as_markup()
 
+
+def triple_answer_keyboarder():
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text=Action.yes,
+        callback_data=AnswerCallback(action=Action.yes)
+    )
+    builder.button(
+        text=Action.no,
+        callback_data=AnswerCallback(action=Action.no)
+    )
+    builder.button(
+        text=Action.sometimes,
+        callback_data=AnswerCallback(action=Action.sometimes)
+    )
+    return builder.as_markup()
+
+
+def further_keyboarder():
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text=Action.further,
+        callback_data=AnswerCallback(action=Action.further)
+    )
+    return builder.as_markup()
+
+
 def sex_keyboarder():
     builder = InlineKeyboardBuilder()
     builder.button(
@@ -62,6 +89,7 @@ def sex_keyboarder():
     )
 
     return builder.as_markup()
+
 
 def prepare_answers(data: dict):
     questions = data.get('questions')
