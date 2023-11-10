@@ -1,36 +1,99 @@
-# Телеграм-бот для прохождения тестов
+## dementia_bot
 
-Этот проект представляет собой Telegram-бота, который позволяет пользователям проходить тесты и получать результаты. Бот создан с использованием фреймворка aiogram и использует конечные автоматы для управления состоянием пользователя.
+Бот для благотворительного фонда "ПАМЯТЬ ПОКОЛЕНИЙ".
 
-## Установка и запуск
+### Подготовка к запуску
 
-1. Установите зависимости:
+Перед запуском бота необходимо подготовить файл `.env`. Вы можете использовать образец `.env.example`, в котором прописаны все необходимые поля.
 
-```bash
-pip install -r requirements.txt
-```
-
-2. Настройте параметры в файле `core/config.py`, включая токен вашего бота и другие необходимые настройки.
-
-3. Запустите бота:
+### Сборка и запуск контейнера
 
 ```bash
-python main.py
+poetry run task start
 ```
 
-## Использование
+### Описание функций
 
-1. Начните диалог с ботом, отправив команду `/selecttest`. Это позволит вам выбрать тест из списка доступных.
+#### `display_question`
 
-2. Отвечайте на вопросы теста, следуя инструкциям бота. Выбирайте ответы с помощью кнопок, если они предоставлены.
+Отображает вопрос с клавиатурой в зависимости от типа вопроса.
 
-3. По завершении теста бот отобразит ваши результаты.
+```python
+async def display_question(chat_id, message_id, question_text, question_type, bot):
+    # ...
+```
 
-## Команды
+#### `cancel_handler`
 
-- `/selecttest` - начать тест, выбрав его из списка.
-- `/cancel` или "отмена" - отменить текущее действие.
+Позволяет пользователю отменить любое действие.
 
-## Расширение функционала
+```python
+@question_router.message(Command("cancel"))
+@question_router.message(F.text.casefold() == "отмена")
+async def cancel_handler(message: Message, state: FSMContext) -> None:
+    # ...
+```
 
-Вы можете легко расширить функционал бота, добавив новые тесты или изменяя вопросы в существующих тестах. Просто создайте новый тест и добавьте его в базу данных тестов.
+#### `start_test`
+
+Начинает тест, показывая список доступных тестов.
+
+```python
+@question_router.message(Command('selecttest'))
+async def start_test(message: Message, state: FSMContext):
+    # ...
+```
+
+#### `choose_test`
+
+Выбирает тест и начинает отвечать на вопросы.
+
+```python
+@question_router.callback_query(Question.test)
+async def choose_test(query: CallbackQuery, state: FSMContext):
+    # ...
+```
+
+#### `questions`
+
+Обрабатывает ответы на вопросы в тесте.
+
+```python
+@question_router.message(Question.answer)
+async def questions(message: Message, state: FSMContext, bot: Bot):
+    # ...
+```
+
+#### `answer_handler`
+
+Обрабатывает ответы с использованием кнопок с действиями.
+
+```python
+@question_router.callback_query(
+    AnswerCallback.filter(F.action.in_(
+        [Action.yes, Action.no, Action.sometimes, Action.further])))
+async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
+                         state: FSMContext, bot: Bot):
+    # ...
+```
+
+#### `sex_handler`
+
+Обрабатывает выбор пола.
+
+```python
+@question_router.callback_query(
+    SexCallback.filter(F.action.in_([Sex.male, Sex.female])))
+async def sex_handler(query: CallbackQuery, callback_data: SexCallback,
+                      state: FSMContext, bot: Bot):
+    # ...
+```
+
+#### `send_results_and_clear`
+
+Отправляет результаты и очищает состояние.
+
+```python
+async def send_results_and_clear(state, bot, chat_id, message_id):
+    # ...
+```

@@ -8,8 +8,7 @@ from aiogram.types import (CallbackQuery, Message, ReplyKeyboardRemove)
 from app.handlers.handler_constants import PERSONAL_TYPES, GENDER_CHOICES, \
     START_MESSAGE
 from app.handlers.test.states import Question
-from app.handlers.test.keyboard import (markup_keyboard,
-                                        prepare_answers,
+from app.handlers.test.keyboard import (prepare_answers,
                                         inline_builder,
                                         answer_keyboarder,
                                         sex_keyboarder,
@@ -31,7 +30,16 @@ question_router = Router()
 
 async def display_question(chat_id, message_id, question_text, question_type,
                            bot):
-    """Отобразить вопрос с клавиатурой в зависимости от типа."""
+    """
+    Display a question with a keyboard based on its type.
+
+    Args:
+    - chat_id: ID of the chat.
+    - message_id: ID of the message.
+    - question_text: Text of the question.
+    - question_type: Type of the question.
+    - bot: Bot instance.
+    """
     keyboard = None
 
     if question_type == 'gender':
@@ -59,33 +67,16 @@ async def display_question(chat_id, message_id, question_text, question_type,
         )
 
 
-async def send_results_and_clear(state, bot, chat_id, message_id):
-    """Отправить результаты и очистить состояние."""
-    updated_data = await state.get_data()
-    json_data = prepare_answers(updated_data)
-
-    async with HttpClient() as session:
-        response = await session.post(f'{settings.HOST}api/submit/', json_data)
-
-    telegram_id = updated_data.get('telegram_id')
-    async with HttpClient() as session:
-        response = await session.get(
-            f'{settings.HOST}api/get_result/{telegram_id}/')
-
-    result_data = response
-    result = result_data['result']
-    result_test = result_data['test']
-
-    await bot.edit_message_text(chat_id=chat_id,
-                                message_id=message_id,
-                                text=tests_result(result_test, result))
-
-    await state.clear()
-
 @question_router.message(Command("cancel"))
 @question_router.message(F.text.casefold() == "отмена")
 async def cancel_handler(message: Message, state: FSMContext) -> None:
-    """Позволяет пользователю отменить любое действие."""
+    """
+    Allow the user to cancel any action.
+
+    Args:
+    - message: The message object.
+    - state: The FSMContext object.
+    """
     current_state = await state.get_state()
     if current_state is None:
         return
@@ -97,10 +88,15 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
     )
 
 
-
 @question_router.message(Command('selecttest'))
 async def start_test(message: Message, state: FSMContext):
-    """Начать тест, показывая список доступных тестов."""
+    """
+    Start a test, showing the list of available tests.
+
+    Args:
+    - message: The message object.
+    - state: The FSMContext object.
+    """
     async with HttpClient() as session:
         response = await session.get(
             f'{settings.HOST}api/tests')
@@ -115,7 +111,13 @@ async def start_test(message: Message, state: FSMContext):
 
 @question_router.callback_query(Question.test)
 async def choose_test(query: CallbackQuery, state: FSMContext):
-    """Выбрать тест и начать отвечать на вопросы."""
+    """
+    Choose a test and start answering questions.
+
+    Args:
+    - query: The CallbackQuery object.
+    - state: The FSMContext object.
+    """
     test_id = int(query.data)
     async with HttpClient() as session:
         response = await session.get(f'{settings.HOST}api/test/{test_id}/')
@@ -128,7 +130,7 @@ async def choose_test(query: CallbackQuery, state: FSMContext):
     await query.message.delete()
     await query.message.answer(
         questions[0]['question'],
-        reply_markup=markup_keyboard(questions[0]['type'])
+        reply_markup=None
     )
     await state.update_data(message_id=query.message.message_id + 1)
     await state.update_data(position=position)
@@ -136,7 +138,14 @@ async def choose_test(query: CallbackQuery, state: FSMContext):
 
 @question_router.message(Question.answer)
 async def questions(message: Message, state: FSMContext, bot: Bot):
-    """Обработка ответов на вопросы в тесте."""
+    """
+    Process answers to questions in the test.
+
+    Args:
+    - message: The Message object.
+    - state: The FSMContext object.
+    - bot: Bot instance.
+    """
     data = await state.get_data()
     position = data.get('position')
     message_id = data.get('message_id')
@@ -166,13 +175,7 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
     await state.update_data({f"answer_{position}": answer})
 
     new_position = position + 1
-
-    if new_position < len(questions):
-        if questions[new_position]['type'] == "telegram_id":
-            await state.update_data(
-                {f"answer_{new_position}": data.get('telegram_id')}
-            )
-            new_position += 1
+    new_position = await update_data_telegram_id(state, new_position)
 
     if new_position >= len(questions):
 
@@ -183,40 +186,57 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
         await state.update_data(position=new_position)
         new_question_text = questions[new_position]['question']
         question_type = questions[new_position]['type']
-        await display_question(chat_id, message_id, new_question_text, question_type, bot)
+        await display_question(chat_id, message_id, new_question_text,
+                               question_type, bot)
         await message.delete()
 
 
-@question_router.callback_query(
-    AnswerCallback.filter(F.action.in_(
-        [Action.yes, Action.no, Action.sometimes, Action.further])))
-async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
-                         state: FSMContext, bot: Bot):
-    """Обработка ответов с использованием кнопок с действиями."""
+async def update_data_telegram_id(state, position):
+    """
+    Update data with 'telegram_id' answer at the given position if applicable.
+
+    Args:
+    - state: The FSMContext object.
+    - position: The current position in the questions list.
+
+    Returns:
+    - int: The updated position.
+    """
+    data = await state.get_data()
+    questions = data.get('questions')
+
+    if position < len(questions) and questions[position][
+        'type'] == "telegram_id":
+        await state.update_data(
+            {f"answer_{position}": data.get('telegram_id')})
+        return position + 1
+
+    return position
+
+
+async def handle_callback_query_action(query, callback_data, state, bot,
+                                       action_mapping):
+    """
+    Handle callback query actions and update the state accordingly.
+
+    Args:
+    - query: The CallbackQuery object.
+    - callback_data: The callback data.
+    - state: The FSMContext object.
+    - bot: The Bot instance.
+    - action_mapping: A dictionary mapping callback actions to answers.
+    """
     data = await state.get_data()
     position = data.get('position')
     questions = data.get('questions')
     message_id = query.message.message_id
     chat_id = query.message.chat.id
 
-    if callback_data.action == Action.yes:
-        answer = 'Да'
-    elif callback_data.action == Action.no:
-        answer = 'Нет'
-    elif callback_data.action == Action.sometimes:
-        answer = 'Иногда'
-    else:
-        answer = 'Принято'
-
+    answer = action_mapping[callback_data.action]
     await state.update_data({f"answer_{position}": answer})
 
     new_position = position + 1
-    if new_position < len(questions):
-        if questions[new_position]['type'] == "telegram_id":
-            await state.update_data(
-                {f"answer_{new_position}": data.get('telegram_id')}
-            )
-            new_position += 1
+    new_position = await update_data_telegram_id(state, new_position)
 
     if new_position >= len(questions):
         await send_results_and_clear(state, bot, chat_id, message_id)
@@ -224,31 +244,62 @@ async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
         await state.update_data(position=new_position)
         new_question_text = questions[new_position]['question']
         question_type = questions[new_position]['type']
-        await display_question(chat_id, message_id, new_question_text, question_type, bot)
+        await display_question(chat_id, message_id, new_question_text,
+                               question_type, bot)
 
+
+@question_router.callback_query(
+    AnswerCallback.filter(F.action.in_(
+        [Action.yes, Action.no, Action.sometimes, Action.further])))
+async def answer_handler(query: CallbackQuery, callback_data: AnswerCallback,
+                         state: FSMContext, bot: Bot):
+    action_mapping = {
+        Action.yes: 'Да',
+        Action.no: 'Нет',
+        Action.sometimes: 'Иногда',
+        Action.further: 'Принято'
+    }
+    await handle_callback_query_action(query, callback_data, state, bot,
+                                       action_mapping)
 
 
 @question_router.callback_query(
     SexCallback.filter(F.action.in_([Sex.male, Sex.female])))
 async def sex_handler(query: CallbackQuery, callback_data: SexCallback,
                       state: FSMContext, bot: Bot):
-    """Обработка выбора пола."""
-    data = await state.get_data()
-    position = data.get('position')
-    questions = data.get('questions')
-    message_id = data.get('message_id')
-    chat_id = query.message.chat.id
-    if callback_data.action == Sex.male:
-        answer = 'Мужской'
-    else:
-        answer = 'Женский'
-    answer = GENDER_CHOICES[answer]
-    await state.update_data({f"answer_{position}": answer})
+    action_mapping = {
+        Sex.male: 'М',
+        Sex.female: 'Ж'
+    }
+    await handle_callback_query_action(query, callback_data, state, bot,
+                                       action_mapping)
 
-    new_position = position + 1
 
-    await state.update_data(position=new_position)
-    new_question_text = questions[new_position]['question']
-    question_type = questions[new_position]['type']
-    await display_question(chat_id, message_id, new_question_text,
-                           question_type, bot)
+async def send_results_and_clear(state, bot, chat_id, message_id):
+    """
+    Send results and clear the state.
+
+    Args:
+    - state: The FSMContext object.
+    - bot: Bot instance.
+    - chat_id: ID of the chat.
+    - message_id: ID of the message.
+    """
+    updated_data = await state.get_data()
+    json_data = prepare_answers(updated_data)
+
+    async with HttpClient() as session:
+        response = await session.post(f'{settings.HOST}api/submit/', json_data)
+        telegram_id = updated_data.get('telegram_id')
+        response = await session.get(
+            f'{settings.HOST}api/get_result/{telegram_id}/')
+
+    result_data = response
+    result = result_data['result']
+    result_test = result_data['test']
+
+    await bot.edit_message_text(chat_id=chat_id,
+                                message_id=message_id,
+                                text=tests_result(result_test, result))
+
+    await state.clear()

@@ -6,6 +6,16 @@ from app.handlers.handler_constants import (SELF_MESSAGE_ONE, SELF_MESSAGE_TWO,
 
 
 def tests_result(test_id, result):
+    """
+    Generates a result message based on the test ID and result.
+
+    Args:
+        test_id (int): The ID of the test.
+        result (str): The result of the test.
+
+    Returns:
+        str: A message based on the test ID and result.
+    """
     if test_id == 1:
         if result == 'NOTEND':
             return MESSAGE_NOTEND
