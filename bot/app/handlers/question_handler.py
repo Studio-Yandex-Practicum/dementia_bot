@@ -160,17 +160,20 @@ async def questions(message: Message, state: FSMContext, bot: Bot):
                 await message.answer(
                     "Пожалуйста введите дату рождения в формате ДД.ММ.ГГГГ."
                 )
+                await message.delete()
                 return
             answer = str(datetime.strptime(answer, '%d.%m.%Y').date())
         elif type == 'email':
             if not validate_email_address(answer):
                 await message.answer('Почта неверно написана. Попробуй снова.')
+                await message.delete()
                 return
         elif questions[position]['type'] == 'current_day':
             if not validate_current_day(answer):
                 await message.answer(
                     "Пожалуйста, введите текущий день недели ДД.ММ.ГГГГ."
                 )
+                await message.delete()
                 return
     await state.update_data({f"answer_{position}": answer})
 
