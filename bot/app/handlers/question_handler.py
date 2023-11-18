@@ -208,8 +208,7 @@ async def update_data_telegram_id(state, position):
     data = await state.get_data()
     questions = data.get('questions')
 
-    if position < len(questions) and questions[position][
-        'type'] == "telegram_id":
+    if position < len(questions) and questions[position]['type'] == "telegram_id":
         await state.update_data(
             {f"answer_{position}": data.get('telegram_id')})
         return position + 1
@@ -301,8 +300,11 @@ async def send_results_and_clear(state, bot, chat_id, message_id):
     result = result_data['result']
     result_test = result_data['test']
 
+    if updated_data.get('questions')[-1]['type'] == 'question':
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+
     await bot.edit_message_text(chat_id=chat_id,
                                 message_id=message_id,
                                 text=tests_result(result_test, result))
-
     await state.clear()
+
