@@ -48,3 +48,49 @@ poetry completions bash >> ~/.bash_completion
 ```
 docker-compose -f ./infra/docker-compose.yaml up -d
 ```
+
+
+## Развертывание проекта с локальной БД
+
+Запускаем БД:
+```bash
+docker-compose -f postgres-local.yaml up -d --build
+```
+Разворачиваем Django:
+    переходим в папку expert-system:
+```bash
+cd expert-system
+```
+    создаем файл .env и заполняем его:
+```bash
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+DB_HOST=db
+DB_PORT=5432
+
+DJANGO_SUPERUSER_PASSWORD=pass
+DJANGO_SUPERUSER_EMAIL=admin@example.com
+DJANGO_SUPERUSER_USERNAME=admin
+```
+    выполняем команды:
+```bash
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+DB_HOST=db
+DB_PORT=5432
+
+DJANGO_SUPERUSER_PASSWORD=pass
+DJANGO_SUPERUSER_EMAIL=admin@example.com
+DJANGO_SUPERUSER_USERNAME=admin
+```bash
+python manage.py makemigrations
+python manage.py migrate
+python manage.py addjson
+python manage.py createsuperuser
+python manage.py collectstatic --no-input
+python manage.py runserver
+```

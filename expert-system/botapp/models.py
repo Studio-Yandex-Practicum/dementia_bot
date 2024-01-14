@@ -95,6 +95,7 @@ class TestParticipant(models.Model):
                                      verbose_name="Время прохождения")
     total_score = models.IntegerField(default=0, verbose_name="Общий балл")
     result = models.CharField(
+        max_length=255,
         choices=const.RESULT_CHOISES,
         verbose_name="Результат прохождения теста",
         default=const.NOTEND
