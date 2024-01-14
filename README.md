@@ -76,17 +76,6 @@ DJANGO_SUPERUSER_USERNAME=admin
 ```
     выполняем команды:
 ```bash
-DB_ENGINE=django.db.backends.postgresql
-DB_NAME=postgres
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-DB_HOST=db
-DB_PORT=5432
-
-DJANGO_SUPERUSER_PASSWORD=pass
-DJANGO_SUPERUSER_EMAIL=admin@example.com
-DJANGO_SUPERUSER_USERNAME=admin
-```bash
 python manage.py makemigrations
 python manage.py migrate
 python manage.py addjson
