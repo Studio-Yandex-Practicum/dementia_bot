@@ -57,11 +57,13 @@ docker-compose -f ./infra/docker-compose.yaml up -d
 docker-compose -f postgres-local.yaml up -d --build
 ```
 Разворачиваем Django:
-    переходим в папку expert-system:
+переходим в папку expert-system:
+
 ```bash
 cd expert-system
 ```
-    создаем файл .env и заполняем его:
+создаем файл .env и заполняем его:
+
 ```bash
 DB_ENGINE=django.db.backends.postgresql
 DB_NAME=postgres
@@ -74,7 +76,8 @@ DJANGO_SUPERUSER_PASSWORD=pass
 DJANGO_SUPERUSER_EMAIL=admin@example.com
 DJANGO_SUPERUSER_USERNAME=admin
 ```
-    выполняем команды:
+выполняем команды:
+
 ```bash
 python manage.py makemigrations
 python manage.py migrate
