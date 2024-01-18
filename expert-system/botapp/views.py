@@ -83,6 +83,6 @@ def get_result(request, telegram_id):
         result = TestParticipant.objects.get(telegram_id=telegram_id)
         serializer = TestResultParticipantSerializer(result)
         return Response(serializer.data)
-    except TestResultParticipantSerializer.DoesNotExist:
+    except TestParticipant.DoesNotExist:
         return Response({"error": "Указанный участник не найден"},
                         status=status.HTTP_404_NOT_FOUND)
