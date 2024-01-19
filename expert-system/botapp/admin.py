@@ -1,9 +1,13 @@
-from botapp.models import (Question,
-                           Test,
-                           TestParticipant,
-                           UserAnswer,
-                           )
 from django.contrib import admin
+from import_export import fields, resources
+from import_export.admin import ImportExportActionModelAdmin
+
+from botapp.models import (
+    Question,
+    Test,
+    TestParticipant,
+    UserAnswer,
+)
 
 
 @admin.register(UserAnswer)
@@ -36,8 +40,18 @@ class TestQuestionInline(admin.TabularInline):
     extra = 1
 
 
+class AnalyticsAndNewsResource(resources.ModelResource):
+
+    class Meta:
+        model = Test
+        import_id_fields = ('title',)
+        skip_unchanged = True
+        report_skipped = True
+
+
 @admin.register(Test)
-class TestAdmin(admin.ModelAdmin):
+class TestAdmin(ImportExportActionModelAdmin):
+    resource_class = AnalyticsAndNewsResource
     list_display = ('id', 'title', 'description', 'qtty_in_test')
     inlines = [TestQuestionInline]
     exclude = ('questions',)
