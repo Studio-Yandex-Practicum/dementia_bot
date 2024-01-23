@@ -8,8 +8,51 @@ from botapp.constants import (SELF_MESSAGE_ONE, SELF_MESSAGE_TWO,SELF_MESSAGE_TH
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 
+@swagger_auto_schema(
+    method='GET',
+    manual_parameters=[
+        openapi.Parameter(
+            name='test_id',
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_STRING,
+            description='Идентификатор теста (набор вопросов)',
+            required=True),
+        ],
+    responses={
+            status.HTTP_200_OK: openapi.Response(
+                description="Успешный запрос",
+                examples={
+                    "application/json": {
+                        "title": "Test name 1",
+                        "questions": [
+                            {
+                            "questionId": 7,
+                            "type": "Question type",
+                            "question": "Текст вопроса"
+                            },
+                            {
+                            "questionId": 19,
+                            "type": "Question type",
+                            "question": "Текст вопроса"
+                            }
+                        ]
+                    }
+            }
+        ),
+        status.HTTP_404_NOT_FOUND: openapi.Response(
+            description="Тест не найден",
+            examples={
+                "application/json": {
+                            "error": "Тест не найден"
+                }
+            }
+        )
+    }
+)
 @api_view(['GET'])
 def get_test(request, test_id):
     """Получаем айди теста и возвращаем впоросы к нему"""
@@ -24,6 +67,23 @@ def get_test(request, test_id):
                         status=status.HTTP_404_NOT_FOUND)
 
 
+@swagger_auto_schema(
+    method='POST',
+    request_body=TestDataSerializer,
+    responses={
+        status.HTTP_201_CREATED: openapi.Response(
+            description="Успешный запрос на сохранение результатов теста",
+            examples={
+                "application/json": {
+                    "message": "Тест завершен успешно!"
+                    }
+                }
+            ),
+        status.HTTP_400_BAD_REQUEST: openapi.Response(
+            description="Некорректные данные в ответах теста",
+            )
+        }
+    )
 @api_view(['POST'])
 def submit_test(request):
     """Получаем данные от пользователя и сохраняем их в БД."""
@@ -43,6 +103,25 @@ def submit_test(request):
                     status=status.HTTP_201_CREATED)
 
 
+@swagger_auto_schema(
+    method='GET',
+    responses={
+        status.HTTP_200_OK: openapi.Response(description="Успешный запрос",
+            examples={
+                "application/json": [
+                    {
+                        "id": 1,
+                        "title": "Test name 1"
+                    },
+                    {
+                        "id": 2,
+                        "title": "Test name 2"
+                    }
+                ]
+            }
+        ),
+    }
+)
 @api_view(['GET'])
 def get_all_tests(request):
     """Получаем все доступные тесты."""
@@ -51,6 +130,22 @@ def get_all_tests(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@swagger_auto_schema(
+    method='POST',
+    request_body=JSONSerializer,
+    responses={
+        status.HTTP_200_OK: openapi.Response(
+        description="Отчет по результатам теста успешно сформирован",
+            examples={
+                "application/json": 
+                    "text message"
+                }
+            ),
+        status.HTTP_400_BAD_REQUEST: openapi.Response(
+            description="Некорректные данные в ответах теста",
+        )
+    }
+)
 @api_view(['POST'])
 def submit_result(request):
     """Получаем JSON с ответами и отправляем результат в бота"""
@@ -73,6 +168,38 @@ def submit_result(request):
     return Response(message, status=status.HTTP_200_OK)
 
 
+@swagger_auto_schema(
+    method='GET',
+    manual_parameters=[
+        openapi.Parameter(
+            name='telegram_id',
+            in_=openapi.IN_PATH,
+            type=openapi.TYPE_STRING,
+            description=('Telegram-идентификатор пользователя,'
+                          ' проходящего тестирование'),
+            required=True),
+        ],
+    responses={
+        status.HTTP_200_OK: openapi.Response(
+            description="Успешный запрос",
+            examples={
+                "application/json": {
+                    "name": "Some user_name",
+                    "test": 1,
+                    "total_score": 3,
+                    "result": "Test result"}
+                }
+        ),
+        status.HTTP_404_NOT_FOUND: openapi.Response(
+            description="Участник не найден",
+            examples={
+                "application/json": {
+                            "error": "Указанный участник не найден"
+                }
+            }
+        )
+    }
+)
 @api_view(['GET'])
 def get_result(request, telegram_id):
     """
