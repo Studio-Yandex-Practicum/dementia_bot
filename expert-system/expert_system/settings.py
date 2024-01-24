@@ -34,6 +34,7 @@ CSRF_TRUSTED_ORIGINS = ['http://localhost',
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework',
     'botapp',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -91,6 +93,7 @@ DATABASES = {
 }
 
 
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -135,3 +138,27 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+JAZZMIN_SETTINGS = {
+    'site_title': 'Dementia',
+    'site_header': 'Dementia',
+
+    # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
+    'site_brand': 'Dementia',
+
+    # Logo to use for your site, must be present in static files, used for brand on top left
+    # 'site_logo': '/images/logo-header.png',
+
+    # CSS classes that are applied to the logo above
+    'site_logo_classes': 'img-circle',
+
+    # Relative path to a favicon for your site, will default to site_logo if absent (ideally 32x32 px)
+    # 'site_icon': '/images/logo-header.png',
+
+    # Welcome text on the login screen
+    'welcome_sign': 'Dementia',
+
+    # Copyright on the footer
+    'copyright': 'Dementia',
+
+}
