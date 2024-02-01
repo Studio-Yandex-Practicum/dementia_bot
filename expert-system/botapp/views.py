@@ -1,3 +1,6 @@
+from google.cloud import vision
+from google.cloud.vision import types
+
 from botapp.models import Test, TestParticipant
 from botapp.serializers import (TestDataSerializer, TestReadSerializer,
                                 TestSerializer, JSONSerializer,
@@ -98,6 +101,45 @@ def submit_test(request):
     questions = validated_data['questions']
     participant = create_participant(questions, test_id)
     create_user_answers(participant, questions, test_id)
+
+    # код для анализа рисунка с часами
+    if 'image' in request.data:
+        image_data = request.data['image']
+        image_bytes = image_data.read()
+        client = vision.ImageAnnotatorClient()
+        image = types.Image(content=image_bytes)
+
+        # Вызываем API для анализа изображения
+        response = client.label_detection(image=image)
+        labels = response.label_annotations
+
+        has_dial = any(label.description.lower() in
+                       ['dial', 'clock face'] for label in labels)
+        has_numbers = all(label.description.isdigit() for label in labels)
+        has_position = any(label.description.lower() in
+                           ['hands pointing to correct numbers',
+                            'hands converging at center'] for label in labels)
+        has_size = any(label.description.lower() in
+                       ['hour hand size', 'minute hand size']
+                       for label in labels)
+
+        # Оценка по компонентам
+        score_mapping = {4: 2, 3: 1, 0: 0}
+
+        test_sum = 0
+        if has_dial:
+            test_sum += 1
+        if has_numbers:
+            test_sum += 1
+        if has_position:
+            test_sum += 1
+        if has_size:
+            test_sum += 1
+
+        # Оценка в соответствии с критериями
+        if test_sum in score_mapping:
+            score = score_mapping[test_sum]
+            return score
 
     return Response({"message": "Тест завершен успешно!"},
                     status=status.HTTP_201_CREATED)
