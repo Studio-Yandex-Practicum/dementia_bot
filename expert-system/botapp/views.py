@@ -1,15 +1,35 @@
-from botapp.models import Test, TestParticipant
-from botapp.serializers import (TestDataSerializer, TestReadSerializer,
-                                TestSerializer, JSONSerializer,
-                                TestResultParticipantSerializer)
-from botapp.utils import create_participant, create_user_answers
-from botapp.constants import (SELF_MESSAGE_ONE, SELF_MESSAGE_TWO,SELF_MESSAGE_THREE,
-                        RELATIVE_MESSAGE_ONE, RELATIVE_MESSAGE_TWO, RELATIVE_MESSAGE_THREE)
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+
+from botapp.constants import (
+    RELATIVE_MESSAGE_ONE,
+    RELATIVE_MESSAGE_THREE,
+    RELATIVE_MESSAGE_TWO,
+    SELF_MESSAGE_ONE,
+    SELF_MESSAGE_THREE,
+    SELF_MESSAGE_TWO,
+)
+from botapp.models import (
+    Answer,
+    AnswerRelative,
+    DementiaTestCase,
+    ResultAnswer,
+    ResultAnswerRelative,
+    Test,
+    TestParticipant,
+)
+from botapp.serializers import (
+    JSONSerializer,
+    TestDataSerializer,
+    TestReadSerializer,
+    TestResultParticipantSerializer,
+    TestSerializer,
+)
+from botapp.services.test_service import TestService, TestServiceRelative
+from botapp.utils import create_participant, create_user_answers
 
 
 @swagger_auto_schema(
@@ -213,3 +233,30 @@ def get_result(request, telegram_id):
     except TestParticipant.DoesNotExist:
         return Response({"error": "Указанный участник не найден"},
                         status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+def get_result_new(test_case_id: int, forClosePerson: bool) -> int:
+    result = 0
+    test_case = DementiaTestCase.objects.get(id=test_case_id)
+
+    for answer in Answer.objects.filter(test_case=test_case_id):
+        if forClosePerson:
+            f = getattr(TestServiceRelative, "question_" + str(answer.question))
+            try:
+                score = f(answer.answer_value, answer.image)
+            except Exception:
+                score = 0
+            question_id = AnswerRelative.objects.get(test_case=answer.test_case, question=answer.question)
+            ResultAnswerRelative.objects.update_or_create(question_id=question_id, defaults={"answer_value": score})
+        else:
+            f = getattr(TestService, "question_" + str(answer.question))
+            try:
+                score = f(answer.answer_value, answer.image)
+            except Exception:
+                score = 0
+            question_id = Answer.objects.get(test_case=answer.test_case, question=answer.question)
+            ResultAnswer.objects.update_or_create(question_id=question_id, defaults={"answer_value": score})
+
+        result += score
+    return result
