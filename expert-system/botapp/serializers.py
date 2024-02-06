@@ -1,5 +1,6 @@
 from botapp.models import Question, Test, TestParticipant
 from botapp.validators import validate_dob, validate_email
+from botapp.validators import validate_image
 from rest_framework import serializers
 
 
@@ -119,3 +120,13 @@ class TestResultParticipantSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestParticipant
         fields = ('name', 'test', 'total_score', 'result')
+
+
+class AnswerImageSerializer(serializers.Serializer):
+    """Сериализатор для графических ответов."""
+
+    file = serializers.ImageField(write_only=True, validators=[validate_image])
+    test_id = serializers.IntegerField()
+    session_id = serializers.IntegerField()
+    question_id = serializers.IntegerField(read_only=True)
+    score = serializers.IntegerField(read_only=True)

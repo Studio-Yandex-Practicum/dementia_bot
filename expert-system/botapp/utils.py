@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from ultralytics import YOLO
 from botapp.constants import PERSONAL_DETAILS, OK, DEVIATIONS, DEMENTIA, NOTEND, COUNTRIES
 from botapp.models import TestParticipant, UserAnswer
 
@@ -132,3 +132,30 @@ def create_user_answers(participant, questions, test_id):
             participant.result = OK
 
     participant.save()
+
+
+def image_detected(img):
+    """Распознавание графического ответа и его оценка"""
+    model = YOLO("botapp/yolo/last.pt")
+    result = model.predict(img, conf=0.84)[0].boxes
+    if len(result) == 0:
+        return 0
+    else:
+        model = YOLO("botapp/yolo/lastv3.pt")
+        results = model.predict(img, conf=0.5)
+        result = results[0]
+        boxs = result.boxes
+        if len(boxs) > 1:
+            return 0
+        for box in boxs:
+            class_id = result.names[box.cls[0].item()]
+            conf = round(box.conf[0].item(), 2)
+            if class_id == "bad_clock" and conf >= 0.55:
+                return 1
+            elif class_id == "clock_good" and conf <= 0.86:
+                return 1
+            elif class_id == "clock_good" and conf > 0.86:
+                return 2
+            else:
+                return 0
+
