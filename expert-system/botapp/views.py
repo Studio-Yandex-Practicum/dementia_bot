@@ -3,7 +3,7 @@ from botapp.serializers import (TestDataSerializer, TestReadSerializer,
                                 TestSerializer, JSONSerializer,
                                 TestResultParticipantSerializer,
                                 AnswerImageSerializer)
-from botapp.utils import create_participant, create_user_answers, image_detected
+from botapp.utils import create_participant, create_user_answers, image_detected, now_date
 from botapp.constants import (SELF_MESSAGE_ONE, SELF_MESSAGE_TWO,SELF_MESSAGE_THREE,
                         RELATIVE_MESSAGE_ONE, RELATIVE_MESSAGE_TWO, RELATIVE_MESSAGE_THREE)
 from rest_framework import status
@@ -13,8 +13,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
-import io
 from PIL import Image
+from io import BytesIO
 
 
 @swagger_auto_schema(
@@ -221,33 +221,25 @@ def get_result(request, telegram_id):
 
 
 @api_view(['POST'])
-def test_image(request, test_id, session_id):
-    """Получаем ответ с изображением, распознаем и сохраняем"""
+def answer_watch(request):
+    """Получаем ответ с изображением, распознаем и сохраняем."""
 
-    data = request.data
-    data['test_id'] = test_id
-    data['session_id'] = session_id
-
-    serializer = AnswerImageSerializer(data=data)
+    serializer = AnswerImageSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     validated_data = serializer.validated_data
-    image_answer = validated_data['file']
 
-    question_id = request.headers['Question']
-    validated_data['question_id'] = question_id
+    image_answer = validated_data['file']
+    image = Image.open(BytesIO(image_answer.read()))
+    score = image_detected(image)
 
     file_extention = image_answer.name.split(".")[-1]
-    new_filename = f'tid{test_id}_sid{session_id}_qid{question_id}.'
+    new_filename = f'watch_{now_date()}_sc{score}.'
     image_answer.name = new_filename + file_extention
     fs = FileSystemStorage(location=settings.MEDIA_ROOT)
-    if fs.exists(image_answer.name):
-        fs.delete(image_answer.name)
     fs.save(image_answer.name, image_answer)
 
-    img = f'{settings.MEDIA_ROOT}/{image_answer.name}'
-    score = image_detected(img)
-    validated_data['score'] = score
+    validated_data['answer_watch'] = score
 
     return Response(serializer.data, status=status.HTTP_200_OK)

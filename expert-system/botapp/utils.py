@@ -159,3 +159,7 @@ def image_detected(img):
             else:
                 return 0
 
+def now_date():
+    """Текущая дата-время."""
+    now = datetime.now()
+    return now.strftime("%Y-%m-%d_%H-%M-%S")

@@ -126,7 +126,4 @@ class AnswerImageSerializer(serializers.Serializer):
     """Сериализатор для графических ответов."""
 
     file = serializers.ImageField(write_only=True, validators=[validate_image])
-    test_id = serializers.IntegerField()
-    session_id = serializers.IntegerField()
-    question_id = serializers.IntegerField(read_only=True)
-    score = serializers.IntegerField(read_only=True)
+    answer_watch = serializers.IntegerField(read_only=True)
