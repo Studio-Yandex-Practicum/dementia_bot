@@ -1,8 +1,9 @@
 from botapp.models import Test, TestParticipant
 from botapp.serializers import (TestDataSerializer, TestReadSerializer,
                                 TestSerializer, JSONSerializer,
-                                TestResultParticipantSerializer)
-from botapp.utils import create_participant, create_user_answers
+                                TestResultParticipantSerializer,
+                                AnswerImageSerializer)
+from botapp.utils import create_participant, create_user_answers, image_detected, now_date
 from botapp.constants import (SELF_MESSAGE_ONE, SELF_MESSAGE_TWO,SELF_MESSAGE_THREE,
                         RELATIVE_MESSAGE_ONE, RELATIVE_MESSAGE_TWO, RELATIVE_MESSAGE_THREE)
 from rest_framework import status
@@ -10,6 +11,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from django.core.files.storage import FileSystemStorage
+from django.conf import settings
+from PIL import Image
+from io import BytesIO
 
 
 @swagger_auto_schema(
@@ -213,3 +218,28 @@ def get_result(request, telegram_id):
     except TestParticipant.DoesNotExist:
         return Response({"error": "Указанный участник не найден"},
                         status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+def answer_watch(request):
+    """Получаем ответ с изображением, распознаем и сохраняем."""
+
+    serializer = AnswerImageSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    validated_data = serializer.validated_data
+
+    image_answer = validated_data['file']
+    image = Image.open(BytesIO(image_answer.read()))
+    score = image_detected(image)
+
+    file_extention = image_answer.name.split(".")[-1]
+    new_filename = f'watch_{now_date()}_sc{score}.'
+    image_answer.name = new_filename + file_extention
+    fs = FileSystemStorage(location=settings.MEDIA_ROOT)
+    fs.save(image_answer.name, image_answer)
+
+    validated_data['answer_watch'] = score
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
