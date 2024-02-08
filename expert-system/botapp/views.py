@@ -222,7 +222,7 @@ def get_result(request, telegram_id):
 
 @api_view(['POST'])
 def answer_watch(request):
-    """Получаем ответ с изображением, распознаем и сохраняем."""
+    """Получаем ответ (N8) с изображением, распознаем и сохраняем."""
 
     serializer = AnswerImageSerializer(data=request.data)
     if not serializer.is_valid():
@@ -240,6 +240,30 @@ def answer_watch(request):
     fs = FileSystemStorage(location=settings.MEDIA_ROOT)
     fs.save(image_answer.name, image_answer)
 
-    validated_data['answer_watch'] = score
+    validated_data['answer_score'] = score
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def answer_copy_test(request):
+    """Получаем ответ (N7) с изображением, распознаем и сохраняем."""
+
+    serializer = AnswerImageSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    validated_data = serializer.validated_data
+
+    image_answer = validated_data['file']
+    image = Image.open(BytesIO(image_answer.read()))
+    score = image_detected(image)
+
+    file_extention = image_answer.name.split(".")[-1]
+    new_filename = f'copy_{now_date()}_sc{score}.'
+    image_answer.name = new_filename + file_extention
+    fs = FileSystemStorage(location=settings.MEDIA_ROOT)
+    fs.save(image_answer.name, image_answer)
+
+    validated_data['answer_score'] = score
 
     return Response(serializer.data, status=status.HTTP_200_OK)
