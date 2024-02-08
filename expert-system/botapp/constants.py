@@ -198,4 +198,4 @@ RELATIVE_MESSAGE_THREE = '''Результат тестирования свид
 
 IMAGE_TYPE = ['image/jpeg', 'image/png']
 
-IMAGE_SIZE = 1024
+IMAGE_SIZE = 2024
