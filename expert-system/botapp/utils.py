@@ -135,7 +135,7 @@ def create_user_answers(participant, questions, test_id):
 
 
 def image_detected(img):
-    """Вопрос 7. Распознавание графического ответа и его оценка"""
+    """Вопрос 8. Распознавание графического ответа и его оценка"""
     model = YOLO("botapp/yolo/last.pt")
     result = model.predict(img, conf=0.84)[0].boxes
     if len(result) == 0:
@@ -167,8 +167,8 @@ def now_date():
 
 
 def image_detected_7(img):
-    """Вопрос 8. Распознавание графического ответа и его оценка"""
-    model = YOLO("botapp/yolo/copy_test_8.pt")
+    """Вопрос 7. Распознавание графического ответа и его оценка"""
+    model = YOLO("botapp/yolo/copy_test_7.pt")
     results = model.predict(img, conf=0.5)
     result = results[0]
     boxs = result.boxes

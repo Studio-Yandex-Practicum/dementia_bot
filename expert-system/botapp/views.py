@@ -3,7 +3,8 @@ from botapp.serializers import (TestDataSerializer, TestReadSerializer,
                                 TestSerializer, JSONSerializer,
                                 TestResultParticipantSerializer,
                                 AnswerImageSerializer)
-from botapp.utils import create_participant, create_user_answers, image_detected, now_date
+from botapp.utils import (create_participant, create_user_answers,
+                          image_detected, image_detected_7, now_date)
 from botapp.constants import (SELF_MESSAGE_ONE, SELF_MESSAGE_TWO,SELF_MESSAGE_THREE,
                         RELATIVE_MESSAGE_ONE, RELATIVE_MESSAGE_TWO, RELATIVE_MESSAGE_THREE)
 from rest_framework import status
@@ -256,7 +257,7 @@ def answer_copy_test(request):
 
     image_answer = validated_data['file']
     image = Image.open(BytesIO(image_answer.read()))
-    score = image_detected(image)
+    score = image_detected_7(image)
 
     file_extention = image_answer.name.split(".")[-1]
     new_filename = f'copy_{now_date()}_sc{score}.'
