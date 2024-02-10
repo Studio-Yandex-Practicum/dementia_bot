@@ -4,11 +4,11 @@ from aiogram.filters import Command
 from aiogram.types import BotCommand, MenuButtonCommands
 from aiogram.utils.markdown import hbold
 
-my_router = Router()
+router = Router()
 dp = Dispatcher(bot=Bot, storage=MemoryStorage())
 
 
-@my_router.message(Command("start"))
+@router.message(Command("start"))
 async def command_start(message: types.Message, bot: Bot):
 
     menu_commands = [
@@ -69,7 +69,7 @@ async def process_callback_test(callback_query: types.CallbackQuery, bot: Bot):
     )
 
 
-@my_router.message(Command("test"))
+@router.message(Command("test"))
 async def command_test(message: types.Message):
 
     inline_kb = types.InlineKeyboardMarkup()
@@ -91,7 +91,7 @@ async def command_test(message: types.Message):
     )
 
 
-@my_router.message(Command("help"))
+@router.message(Command("help"))
 async def command_help(message: types.Message):
 
     await message.answer("""
@@ -106,7 +106,7 @@ async def command_help(message: types.Message):
     """)
 
 
-@my_router.message(Command("/signup"))
+@router.message(Command("/signup"))
 async def command_signup(message: types.Message):
 
     inline_kb = types.InlineKeyboardMarkup()
@@ -124,7 +124,7 @@ async def command_signup(message: types.Message):
     )
 
 
-@my_router.message(Command("/participate"))
+@router.message(Command("/participate"))
 async def command_participate(message: types.Message):
 
     inline_kb = types.InlineKeyboardMarkup()
