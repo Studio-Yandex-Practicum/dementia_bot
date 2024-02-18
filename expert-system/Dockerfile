@@ -24,9 +24,11 @@ FROM python:3.10-slim
 
 ENV POETRY_VIRTUALENVS_IN_PROJECT=false
 
-# RUN apt-get update && apt-get install -y \
-#     postgresql-client \
-#     curl
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    curl
+RUN apt install -y libgl1-mesa-glx \
+    libgtk2.0-dev
 
 COPY --from=builder /root/.cache/pypoetry/virtualenvs/ /root/.cache/pypoetry/virtualenvs/
 
