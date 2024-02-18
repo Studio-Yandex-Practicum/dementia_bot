@@ -20,14 +20,14 @@ def answer_watch(request):
     validated_data = serializer.validated_data
 
     image_answer = validated_data['file']
-    image = Image.open(BytesIO(image_answer.read()))
-    score = image_detected_8(image)
+    
 
     file_extention = image_answer.name.split(".")[-1]
-    new_filename = f'watch_{now_date()}_sc{score}.'
+    new_filename = f'watch_{now_date()}_sc{"3"}.'
     image_answer.name = new_filename + file_extention
     fs = FileSystemStorage(location=settings.MEDIA_ROOT)
     fs.save(image_answer.name, image_answer)
+    score = image_detected_8(f"media/{image_answer}")
 
     validated_data['answer_score'] = score
 

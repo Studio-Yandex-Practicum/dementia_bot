@@ -18,14 +18,15 @@ def image_detected_8(img):
         for box in boxs:
             class_id = result.names[box.cls[0].item()]
             conf = round(box.conf[0].item(), 2)
-            if class_id == "bad_clock" and conf >= 0.55:
+            if class_id == "bad_clock" and conf >= 0.75:
                 return 1
-            elif class_id == "clock_good" and conf <= 0.86:
+            elif class_id == "clock_good" and conf <= 0.84:
                 return 1
-            elif class_id == "clock_good" and conf > 0.86:
+            elif class_id == "clock_good" and conf > 0.84:
                 return 2
             else:
                 return 0
+    return 0
 
 def now_date():
     """Текущая дата-время."""
