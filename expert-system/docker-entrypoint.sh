@@ -12,6 +12,6 @@
 # poetry run task collectstatic
 # poetry run task addjson
 # poetry run task createsuperuser --noinput
-poetry run task start 0:8000
+gunicorn expert_system.wsgi:application --bind 0:8000
 
 exec "$@"

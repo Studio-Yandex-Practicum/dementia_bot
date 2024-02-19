@@ -2,42 +2,17 @@ FROM python:3.10-slim as builder
 
 RUN apt-get update && apt-get install -y \
     python3-dev \
-    gcc \
-    libc-dev \
-    libffi-dev \
-    libpq-dev \
     curl
-
-RUN pip install poetry==1.5.1
 
 WORKDIR /app
+COPY requirements.txt /app/
+RUN pip install torch==1.11.0+cpu torchvision==0.12.0+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
+RUN pip install ultralytics==8.1.9 --no-deps
 
-COPY ./pyproject.toml ./poetry.lock ./
+RUN pip install -r requirements.txt
 
-COPY ./README.md .
-
-RUN mkdir "expert_system" && echo "import this" > expert_system/main.py
-
-RUN poetry install 
-
-FROM python:3.10-slim
-
-ENV POETRY_VIRTUALENVS_IN_PROJECT=false
-
-RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    curl
 RUN apt install -y libgl1-mesa-glx \
     libgtk2.0-dev
-
-COPY --from=builder /root/.cache/pypoetry/virtualenvs/ /root/.cache/pypoetry/virtualenvs/
-
-RUN pip install poetry==1.5.1
-
-WORKDIR /app
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
 
 COPY . .
 
