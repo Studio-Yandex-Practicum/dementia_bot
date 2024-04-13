@@ -2,6 +2,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.webhook.aiohttp_server import (SimpleRequestHandler,
                                             setup_application)
+
 from aiohttp import web
 from app.handlers.question_handler import question_router
 from app.handlers.start_handler import start_router
@@ -14,6 +15,8 @@ dp.include_router(form_router)
 dp.include_router(question_router)
 
 bot = Bot(settings.telegram_api_token, parse_mode=ParseMode.HTML)
+
+bot.set_my_description(settings.BOT_DESCRIPTION)
 
 
 async def run_polling() -> None:

@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     # in this example it is used public DNS with HTTPS support
     BASE_WEBHOOK_URL: str = "https://aiogram.dev/"
     HOST: str = "http://web:8000/"
+    # Описание при первом переходе в бота
+    BOT_DESCRIPTION: str = "Demencia Bot"
 
     class Config:
         env_file = '.env'
