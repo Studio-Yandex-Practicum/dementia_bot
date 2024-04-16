@@ -4,18 +4,22 @@ from aiogram.types import Message, WebAppInfo, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.handlers.handler_constants import (
-    ABOUT_TEST_TEXT, HELP_TEST_TEXT, TEST_URL
+    ABOUT_TEST_TEXT,
+    HELP_TEST_TEXT,
+    TEST_URL,
+    INFO_TEST_BUTTON,
+    START_TEST_BUTTON,
 )
 
 
 form_router = Router()
 
 
-@form_router.message(Command('test'))
+@form_router.message(Command("test"))
 async def test(message: Message) -> None:
     builder = InlineKeyboardBuilder()
     builder.add(
-        InlineKeyboardButton(text='Тестирование', callback_data='test')
+        InlineKeyboardButton(text=INFO_TEST_BUTTON, callback_data="test"),
     )
     await message.answer(
         text=ABOUT_TEST_TEXT,
@@ -28,8 +32,8 @@ async def test_callback(call: Message) -> None:
     builder = InlineKeyboardBuilder()
     builder.add(
         InlineKeyboardButton(
-            text='Проверить себя',
-            web_app=WebAppInfo(url=f'{TEST_URL}')
+            text=START_TEST_BUTTON,
+            web_app=WebAppInfo(url=f"{TEST_URL}"),
         )
     )
     await call.message.answer(
