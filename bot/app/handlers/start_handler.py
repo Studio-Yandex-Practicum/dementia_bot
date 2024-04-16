@@ -1,13 +1,14 @@
-from aiogram import Router, Bot
+from aiogram import Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message, BotCommand
-from aiogram.utils.markdown import hbold
+from aiogram.types import Message
+from aiogram.utils.markdown import link
 from aiogram.enums import ParseMode
 
-from core.config import settings
-from app.handlers.handler_constants import START_MESSAGE, BOT_COMMANDS
-
-bot = Bot(settings.telegram_api_token, parse_mode=ParseMode.HTML)
+from app.handlers.handler_constants import (
+    START_MESSAGE,
+    PROJECT_LINK,
+    PROJECT_LINK_TITLE,
+)
 
 start_router = Router()
 
@@ -18,14 +19,7 @@ async def command_start_handler(message: Message) -> None:
     This handler receives messages with `/start` command
     """
     await message.answer(
-        f"Привет, {hbold(message.from_user.full_name)}!"
-        f"\n{START_MESSAGE}"
-    )
-    await bot.set_my_commands(
-        commands=[
-            BotCommand(
-                command=command,
-                description=description
-            ) for command, description in BOT_COMMANDS.items()
-        ],
+        "На связи команда проекта "
+        f"{link(title=PROJECT_LINK_TITLE, url=PROJECT_LINK)}\!"
+        f"\n{START_MESSAGE}", parse_mode=ParseMode.MARKDOWN_V2
     )
