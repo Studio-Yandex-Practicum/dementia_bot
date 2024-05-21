@@ -1,67 +1,42 @@
-from datetime import datetime
-
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
-from validate_email import validate_email
+from aiogram.types import Message, WebAppInfo, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from .test.keyboard import kb_gender
-from .test.states import Register
+from app.handlers.handler_constants import (
+    ABOUT_TEST_TEXT,
+    HELP_TEST_TEXT,
+    TEST_URL,
+    INFO_TEST_BUTTON,
+    START_TEST_BUTTON,
+)
+
 
 form_router = Router()
 
 
-@form_router.message(Command('test'))
-async def register_(message: Message, state: FSMContext) -> None:
-    await state.set_state(Register.name)
-    await message.answer('Введите Ваше Имя:')
+@form_router.message(Command("test"))
+async def test(message: Message) -> None:
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(text=INFO_TEST_BUTTON, callback_data="test"),
+    )
+    await message.answer(
+        text=ABOUT_TEST_TEXT,
+        reply_markup=builder.as_markup(resize_keyboard=True),
+    )
 
 
-@form_router.message(Register.name)
-async def get_name(message: Message, state: FSMContext) -> None:
-    answer = message.text
-    await state.update_data(name=answer)
-    await state.set_state(Register.age)
-    await message.answer('Введите свою Дату рождения:')
-
-
-@form_router.message(Register.age)
-async def get_age(message: Message, state: FSMContext):
-    answer = message.text
-    datetime.strptime(answer, '%d.%m.%Y')
-    await state.update_data(age=answer)
-    await state.set_state(Register.gender)
-    await message.answer('Укажите Ваш Пол:', reply_markup=kb_gender)
-
-
-@form_router.message(Register.gender)
-async def get_gender(message: Message, state: FSMContext):
-    answer = message.text
-    if answer == 'Мужской' or answer == 'Женский':
-        await state.update_data(gender=answer)
-    else:
-        await message.answer('Не соответствует вариантам: Мужской, Женский!!!')
-        raise ValueError('Не соответствует вариантам!!!')
-    await state.set_state(Register.email)
-    await message.answer('Укажите электронную почту:')
-
-
-@form_router.message(Register.email)
-async def email(message: Message, state: FSMContext):
-    answer = message.text
-    if validate_email(answer) is True:
-        await state.update_data(email=answer)
-    else:
-        await message.answer('Почта неверно написана. Попробуй снова.')
-        raise ValueError('Неверное имя почты')
-    data = await state.get_data()
-    name = data.get('name')
-    age = data.get('age')
-    gender = data.get('gender')
-    email = data.get('email')
-    await message.answer('Твои ответы: '
-                         f'Имя: {name}, '
-                         f'дата рождения: {age}, '
-                         f'пол - {gender}, почта - {email}')
-    await state.finish()
+@form_router.callback_query(F.data == "test")
+async def test_callback(call: Message) -> None:
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(
+            text=START_TEST_BUTTON,
+            web_app=WebAppInfo(url=f"{TEST_URL}"),
+        )
+    )
+    await call.message.answer(
+        text=HELP_TEST_TEXT,
+        reply_markup=builder.as_markup(resize_keyboard=True),
+    )
